@@ -20982,34 +20982,37 @@ goog.provide("prosediff.core");
 goog.require("cljs.core");
 goog.require("clojure.string");
 prosediff.core.word_chars = cljs.core.PersistentHashSet.fromArray(["A", "a", "B", "b", "C", "c", "D", "d", "E", "e", "F", "f", "'", "G", "g", "H", "h", "I", "i", "J", "j", "K", "k", "L", "l", "-", "M", "m", "N", "n", "O", "o", "0", "P", "p", "1", "Q", "q", "2", "R", "r", "3", "S", "s", "4", "T", "t", "5", "U", "u", "6", "V", "v", "7", "W", "w", "8", "X", "x", "9", "Y", "y", "Z", "z"]);
+prosediff.core.log = function log(item) {
+  return console.log(cljs.core.pr_str.call(null, item))
+};
 prosediff.core.split_to_words = function() {
-  var split_to_words__delegate = function(string, p__2851) {
-    var map__2853 = p__2851;
-    var map__2853__$1 = cljs.core.seq_QMARK_.call(null, map__2853) ? cljs.core.apply.call(null, cljs.core.hash_map, map__2853) : map__2853;
-    var strip_spaces = cljs.core._lookup.call(null, map__2853__$1, "\ufdd0'strip-spaces", true);
-    return cljs.core.remove.call(null, function(p1__2849_SHARP_) {
+  var split_to_words__delegate = function(string, p__9274) {
+    var map__9276 = p__9274;
+    var map__9276__$1 = cljs.core.seq_QMARK_.call(null, map__9276) ? cljs.core.apply.call(null, cljs.core.hash_map, map__9276) : map__9276;
+    var strip_spaces = cljs.core._lookup.call(null, map__9276__$1, "\ufdd0'strip-spaces", true);
+    return cljs.core.remove.call(null, function(p1__9272_SHARP_) {
       var and__3822__auto__ = strip_spaces;
       if(cljs.core.truth_(and__3822__auto__)) {
-        return cljs.core._EQ_.call(null, p1__2849_SHARP_, " ")
+        return cljs.core._EQ_.call(null, p1__9272_SHARP_, " ")
       }else {
         return and__3822__auto__
       }
-    }, cljs.core.map.call(null, cljs.core.partial.call(null, cljs.core.apply, cljs.core.str), cljs.core.partition_by.call(null, function(p1__2850_SHARP_) {
-      return cljs.core.complement.call(null, cljs.core.contains_QMARK_).call(null, prosediff.core.word_chars, p1__2850_SHARP_)
+    }, cljs.core.map.call(null, cljs.core.partial.call(null, cljs.core.apply, cljs.core.str), cljs.core.partition_by.call(null, function(p1__9273_SHARP_) {
+      return cljs.core.complement.call(null, cljs.core.contains_QMARK_).call(null, prosediff.core.word_chars, p1__9273_SHARP_)
     }, string)))
   };
   var split_to_words = function(string, var_args) {
-    var p__2851 = null;
+    var p__9274 = null;
     if(goog.isDef(var_args)) {
-      p__2851 = cljs.core.array_seq(Array.prototype.slice.call(arguments, 1), 0)
+      p__9274 = cljs.core.array_seq(Array.prototype.slice.call(arguments, 1), 0)
     }
-    return split_to_words__delegate.call(this, string, p__2851)
+    return split_to_words__delegate.call(this, string, p__9274)
   };
   split_to_words.cljs$lang$maxFixedArity = 1;
-  split_to_words.cljs$lang$applyTo = function(arglist__2854) {
-    var string = cljs.core.first(arglist__2854);
-    var p__2851 = cljs.core.rest(arglist__2854);
-    return split_to_words__delegate(string, p__2851)
+  split_to_words.cljs$lang$applyTo = function(arglist__9277) {
+    var string = cljs.core.first(arglist__9277);
+    var p__9274 = cljs.core.rest(arglist__9277);
+    return split_to_words__delegate(string, p__9274)
   };
   split_to_words.cljs$lang$arity$variadic = split_to_words__delegate;
   return split_to_words
@@ -21018,21 +21021,21 @@ prosediff.core.indexed_word_list = function indexed_word_list(word_list) {
   return cljs.core.map.call(null, cljs.core.vector, cljs.core.iterate.call(null, cljs.core.inc, 0), word_list)
 };
 prosediff.core.pigeonhole = function pigeonhole(L, key_func, val_func) {
-  return cljs.core.apply.call(null, cljs.core.merge_with, cljs.core.comp.call(null, cljs.core.vec, cljs.core.flatten, cljs.core.vector), cljs.core.map.call(null, cljs.core.partial.call(null, cljs.core.apply, cljs.core.hash_map), cljs.core.map.call(null, function(p1__2855_SHARP_) {
-    return cljs.core.vector.call(null, key_func.call(null, p1__2855_SHARP_), cljs.core.vector.call(null, val_func.call(null, p1__2855_SHARP_)))
+  return cljs.core.apply.call(null, cljs.core.merge_with, cljs.core.comp.call(null, cljs.core.vec, cljs.core.flatten, cljs.core.vector), cljs.core.map.call(null, cljs.core.partial.call(null, cljs.core.apply, cljs.core.hash_map), cljs.core.map.call(null, function(p1__9278_SHARP_) {
+    return cljs.core.vector.call(null, key_func.call(null, p1__9278_SHARP_), cljs.core.vector.call(null, val_func.call(null, p1__9278_SHARP_)))
   }, L)))
 };
 prosediff.core.map_over_values = function map_over_values(f, m) {
   return cljs.core.into.call(null, cljs.core.empty.call(null, m), function() {
-    var iter__2498__auto__ = function iter__2860(s__2861) {
+    var iter__2498__auto__ = function iter__9283(s__9284) {
       return new cljs.core.LazySeq(null, false, function() {
-        var s__2861__$1 = s__2861;
+        var s__9284__$1 = s__9284;
         while(true) {
-          if(cljs.core.seq.call(null, s__2861__$1)) {
-            var vec__2863 = cljs.core.first.call(null, s__2861__$1);
-            var k = cljs.core.nth.call(null, vec__2863, 0, null);
-            var v = cljs.core.nth.call(null, vec__2863, 1, null);
-            return cljs.core.cons.call(null, cljs.core.PersistentVector.fromArray([k, f.call(null, v)], true), iter__2860.call(null, cljs.core.rest.call(null, s__2861__$1)))
+          if(cljs.core.seq.call(null, s__9284__$1)) {
+            var vec__9286 = cljs.core.first.call(null, s__9284__$1);
+            var k = cljs.core.nth.call(null, vec__9286, 0, null);
+            var v = cljs.core.nth.call(null, vec__9286, 1, null);
+            return cljs.core.cons.call(null, cljs.core.PersistentVector.fromArray([k, f.call(null, v)], true), iter__9283.call(null, cljs.core.rest.call(null, s__9284__$1)))
           }else {
             return null
           }
@@ -21088,8 +21091,8 @@ prosediff.core.match_with_single_sequence = function match_with_single_sequence(
   }
 };
 prosediff.core.match_with_sequences = function match_with_sequences(sequence_list, graph_edge) {
-  var results = cljs.core.map.call(null, function(p1__2864_SHARP_) {
-    return prosediff.core.match_with_single_sequence.call(null, p1__2864_SHARP_, graph_edge)
+  var results = cljs.core.map.call(null, function(p1__9287_SHARP_) {
+    return prosediff.core.match_with_single_sequence.call(null, p1__9287_SHARP_, graph_edge)
   }, sequence_list);
   var matches = cljs.core.map.call(null, "\ufdd0'match", cljs.core.filter.call(null, "\ufdd0'match", results));
   var non_matches = cljs.core.map.call(null, "\ufdd0'non-match", cljs.core.filter.call(null, "\ufdd0'non-match", results));
@@ -21107,20 +21110,23 @@ prosediff.core.extend_sequences_from_node = function extend_sequences_from_node(
       return results
     }else {
       var new_results = prosediff.core.match_with_sequences.call(null, (new cljs.core.Keyword("\ufdd0'non-matches")).call(null, results), cljs.core.first.call(null, edges));
-      var G__2866 = cljs.core.rest.call(null, edges);
-      var G__2867 = cljs.core.ObjMap.fromObject(["\ufdd0'matches", "\ufdd0'non-matches"], {"\ufdd0'matches":cljs.core.concat.call(null, (new cljs.core.Keyword("\ufdd0'matches")).call(null, results), (new cljs.core.Keyword("\ufdd0'matches")).call(null, new_results), (new cljs.core.Keyword("\ufdd0'new")).call(null, new_results)), "\ufdd0'non-matches":(new cljs.core.Keyword("\ufdd0'non-matches")).call(null, new_results)});
-      edges = G__2866;
-      results = G__2867;
+      var G__9289 = cljs.core.rest.call(null, edges);
+      var G__9290 = cljs.core.ObjMap.fromObject(["\ufdd0'matches", "\ufdd0'non-matches"], {"\ufdd0'matches":cljs.core.concat.call(null, (new cljs.core.Keyword("\ufdd0'matches")).call(null, results), (new cljs.core.Keyword("\ufdd0'matches")).call(null, new_results), (new cljs.core.Keyword("\ufdd0'new")).call(null, new_results)), "\ufdd0'non-matches":(new cljs.core.Keyword("\ufdd0'non-matches")).call(null, new_results)});
+      edges = G__9289;
+      results = G__9290;
       continue
     }
     break
   }
 };
 prosediff.core.find_common_subsequences = function find_common_subsequences(left_string, right_string) {
+  prosediff.core.log.call(null, [cljs.core.str("Matching strings of lengths "), cljs.core.str(cljs.core.count.call(null, left_string)), cljs.core.str(" (left) and "), cljs.core.str(cljs.core.count.call(null, right_string)), cljs.core.str(" (right).")].join(""));
   return cljs.core.map.call(null, cljs.core.reverse, function() {
-    var graph = cljs.core.apply.call(null, prosediff.core.match_graph, cljs.core.map.call(null, cljs.core.comp.call(null, prosediff.core.split_to_words, function(p1__2865_SHARP_) {
-      return p1__2865_SHARP_.toLowerCase()
+    var m_g = cljs.core.apply.call(null, prosediff.core.match_graph, cljs.core.map.call(null, cljs.core.comp.call(null, prosediff.core.split_to_words, function(p1__9288_SHARP_) {
+      return p1__9288_SHARP_.toLowerCase()
     }), cljs.core.PersistentVector.fromArray([left_string, right_string], true)));
+    prosediff.core.log.call(null, [cljs.core.str("Edges in graph: "), cljs.core.str(cljs.core.reduce.call(null, cljs.core._PLUS_, 0, cljs.core.map.call(null, cljs.core.comp.call(null, cljs.core.count, "\ufdd0'right-indices"), m_g)))].join(""));
+    var graph = m_g;
     var live = null;
     var complete = null;
     while(true) {
@@ -21128,12 +21134,12 @@ prosediff.core.find_common_subsequences = function find_common_subsequences(left
         return cljs.core.concat.call(null, live, complete)
       }else {
         var new_sequences = prosediff.core.extend_sequences_from_node.call(null, live, cljs.core.first.call(null, graph));
-        var G__2868 = cljs.core.rest.call(null, graph);
-        var G__2869 = (new cljs.core.Keyword("\ufdd0'matches")).call(null, new_sequences);
-        var G__2870 = cljs.core.concat.call(null, complete, (new cljs.core.Keyword("\ufdd0'non-matches")).call(null, new_sequences));
-        graph = G__2868;
-        live = G__2869;
-        complete = G__2870;
+        var G__9291 = cljs.core.rest.call(null, graph);
+        var G__9292 = (new cljs.core.Keyword("\ufdd0'matches")).call(null, new_sequences);
+        var G__9293 = cljs.core.concat.call(null, complete, (new cljs.core.Keyword("\ufdd0'non-matches")).call(null, new_sequences));
+        graph = G__9291;
+        live = G__9292;
+        complete = G__9293;
         continue
       }
       break
@@ -21154,12 +21160,13 @@ prosediff.core.both_sides_range_subset_QMARK_ = function both_sides_range_subset
   }
 };
 prosediff.core.remove_redundant_ranges = function remove_redundant_ranges(ranges_list) {
+  prosediff.core.log.call(null, [cljs.core.str("Unfiltered matches: "), cljs.core.str(cljs.core.count.call(null, ranges_list))].join(""));
   var r_map = prosediff.core.pigeonhole.call(null, ranges_list, "\ufdd0'left-start", cljs.core.identity);
   return cljs.core.remove.call(null, cljs.core.empty_QMARK_, cljs.core.map.call(null, cljs.core.comp.call(null, function(pair) {
-    if(cljs.core.empty_QMARK_.call(null, cljs.core.filter.call(null, function(p1__2871_SHARP_) {
-      var and__3822__auto__ = prosediff.core.both_sides_range_subset_QMARK_.call(null, cljs.core.first.call(null, pair), p1__2871_SHARP_);
+    if(cljs.core.empty_QMARK_.call(null, cljs.core.filter.call(null, function(p1__9294_SHARP_) {
+      var and__3822__auto__ = prosediff.core.both_sides_range_subset_QMARK_.call(null, cljs.core.first.call(null, pair), p1__9294_SHARP_);
       if(cljs.core.truth_(and__3822__auto__)) {
-        return!cljs.core._EQ_.call(null, p1__2871_SHARP_, cljs.core.first.call(null, pair))
+        return!cljs.core._EQ_.call(null, p1__9294_SHARP_, cljs.core.first.call(null, pair))
       }else {
         return and__3822__auto__
       }
@@ -21168,13 +21175,14 @@ prosediff.core.remove_redundant_ranges = function remove_redundant_ranges(ranges
     }else {
       return null
     }
-  }, cljs.core.juxt.call(null, cljs.core.identity, cljs.core.comp.call(null, cljs.core.partial.call(null, cljs.core.apply, cljs.core.concat), cljs.core.partial.call(null, cljs.core.map, function(p1__2872_SHARP_) {
-    return cljs.core._lookup.call(null, r_map, p1__2872_SHARP_, null)
-  }), cljs.core.partial.call(null, cljs.core.apply, function(p1__2873_SHARP_, p2__2874_SHARP_) {
-    return cljs.core.range.call(null, p1__2873_SHARP_ - p2__2874_SHARP_, 1 + p1__2873_SHARP_ + p2__2874_SHARP_)
+  }, cljs.core.juxt.call(null, cljs.core.identity, cljs.core.comp.call(null, cljs.core.partial.call(null, cljs.core.apply, cljs.core.concat), cljs.core.partial.call(null, cljs.core.map, function(p1__9295_SHARP_) {
+    return cljs.core._lookup.call(null, r_map, p1__9295_SHARP_, null)
+  }), cljs.core.partial.call(null, cljs.core.apply, function(p1__9296_SHARP_, p2__9297_SHARP_) {
+    return cljs.core.range.call(null, p1__9296_SHARP_ - p2__9297_SHARP_, 1 + p1__9296_SHARP_ + p2__9297_SHARP_)
   }), cljs.core.juxt.call(null, "\ufdd0'left-start", "\ufdd0'length")))), cljs.core.apply.call(null, cljs.core.concat, cljs.core.vals.call(null, r_map))))
 };
 prosediff.core.attach_IDs = function attach_IDs(dict_list) {
+  prosediff.core.log.call(null, [cljs.core.str("Filtered matches: "), cljs.core.str(cljs.core.count.call(null, dict_list))].join(""));
   var id_list = cljs.core.range.call(null, cljs.core.count.call(null, dict_list));
   var list_no_ids = dict_list;
   var ids = id_list;
@@ -21183,12 +21191,12 @@ prosediff.core.attach_IDs = function attach_IDs(dict_list) {
     if(cljs.core.empty_QMARK_.call(null, list_no_ids)) {
       return list_with_ids
     }else {
-      var G__2875 = cljs.core.rest.call(null, list_no_ids);
-      var G__2876 = cljs.core.rest.call(null, ids);
-      var G__2877 = cljs.core.cons.call(null, cljs.core.conj.call(null, cljs.core.first.call(null, list_no_ids), cljs.core.ObjMap.fromObject(["\ufdd0'block-id"], {"\ufdd0'block-id":cljs.core.first.call(null, ids)})), list_with_ids);
-      list_no_ids = G__2875;
-      ids = G__2876;
-      list_with_ids = G__2877;
+      var G__9298 = cljs.core.rest.call(null, list_no_ids);
+      var G__9299 = cljs.core.rest.call(null, ids);
+      var G__9300 = cljs.core.cons.call(null, cljs.core.conj.call(null, cljs.core.first.call(null, list_no_ids), cljs.core.ObjMap.fromObject(["\ufdd0'block-id"], {"\ufdd0'block-id":cljs.core.first.call(null, ids)})), list_with_ids);
+      list_no_ids = G__9298;
+      ids = G__9299;
+      list_with_ids = G__9300;
       continue
     }
     break
@@ -21196,13 +21204,13 @@ prosediff.core.attach_IDs = function attach_IDs(dict_list) {
 };
 prosediff.core.common_words_threshold = 2;
 prosediff.core.remove_spurious = function remove_spurious(left_string, right_string, ranges_list) {
-  var vec__2880 = cljs.core.map.call(null, function(string) {
-    return cljs.core.comp.call(null, cljs.core.partial.call(null, prosediff.core.map_over_values, cljs.core.count), prosediff.core.word_indices_map, prosediff.core.split_to_words, function(p1__2878_SHARP_) {
-      return p1__2878_SHARP_.toLowerCase()
+  var vec__9303 = cljs.core.map.call(null, function(string) {
+    return cljs.core.comp.call(null, cljs.core.partial.call(null, prosediff.core.map_over_values, cljs.core.count), prosediff.core.word_indices_map, prosediff.core.split_to_words, function(p1__9301_SHARP_) {
+      return p1__9301_SHARP_.toLowerCase()
     }).call(null, string)
   }, cljs.core.PersistentVector.fromArray([left_string, right_string], true));
-  var left_counts = cljs.core.nth.call(null, vec__2880, 0, null);
-  var right_counts = cljs.core.nth.call(null, vec__2880, 1, null);
+  var left_counts = cljs.core.nth.call(null, vec__9303, 0, null);
+  var right_counts = cljs.core.nth.call(null, vec__9303, 1, null);
   return cljs.core.filter.call(null, function(r) {
     var or__3824__auto__ = function() {
       var or__3824__auto__ = cljs.core._lookup.call(null, left_counts, cljs.core.comp.call(null, cljs.core.str, "\ufdd0'words", r), null);
@@ -21239,13 +21247,13 @@ prosediff.core.tagged_word_lists = function tagged_word_lists(left_string, right
     }, words_index_map, indices)
   };
   var ranges_with_IDs = prosediff.core.filtered_match_ranges.call(null, left_string, right_string);
-  var vec__2882 = cljs.core.map.call(null, function(string) {
+  var vec__9305 = cljs.core.map.call(null, function(string) {
     return cljs.core.into.call(null, cljs.core.sorted_map.call(null), cljs.core.map.call(null, function(pair) {
       return cljs.core.PersistentVector.fromArray([cljs.core.first.call(null, pair), cljs.core.ObjMap.fromObject(["\ufdd0'word", "\ufdd0'block-ids"], {"\ufdd0'word":cljs.core.second.call(null, pair), "\ufdd0'block-ids":null})], true)
     }, prosediff.core.indexed_word_list.call(null, prosediff.core.split_to_words.call(null, string))))
   }, cljs.core.PersistentVector.fromArray([left_string, right_string], true));
-  var left_words_index_map = cljs.core.nth.call(null, vec__2882, 0, null);
-  var right_words_index_map = cljs.core.nth.call(null, vec__2882, 1, null);
+  var left_words_index_map = cljs.core.nth.call(null, vec__9305, 0, null);
+  var right_words_index_map = cljs.core.nth.call(null, vec__9305, 1, null);
   return cljs.core.map.call(null, function(side, words_index_map) {
     return cljs.core.vals.call(null, cljs.core.reduce.call(null, cljs.core.partial.call(null, prosediff.core.id_labeling_fold_func, side), words_index_map, ranges_with_IDs))
   }, cljs.core.PersistentVector.fromArray(["\ufdd0'left-start", "\ufdd0'right-start"], true), cljs.core.PersistentVector.fromArray([left_words_index_map, right_words_index_map], true))
@@ -21264,20 +21272,20 @@ prosediff.core.reinsert_spaces = function reinsert_spaces(t_w_list, string) {
         return cljs.core.reverse.call(null, result)
       }else {
         if(cljs.core._EQ_.call(null, cljs.core.first.call(null, w_s), cljs.core.first.call(null, n_s))) {
-          var G__2884 = cljs.core.rest.call(null, w_s);
-          var G__2885 = cljs.core.rest.call(null, n_s);
-          var G__2886 = cljs.core.cons.call(null, cljs.core.first.call(null, w_s), result);
-          w_s = G__2884;
-          n_s = G__2885;
-          result = G__2886;
+          var G__9307 = cljs.core.rest.call(null, w_s);
+          var G__9308 = cljs.core.rest.call(null, n_s);
+          var G__9309 = cljs.core.cons.call(null, cljs.core.first.call(null, w_s), result);
+          w_s = G__9307;
+          n_s = G__9308;
+          result = G__9309;
           continue
         }else {
-          var G__2887 = cljs.core.rest.call(null, w_s);
-          var G__2888 = n_s;
-          var G__2889 = cljs.core.cons.call(null, [cljs.core.str(cljs.core.first.call(null, result)), cljs.core.str(cljs.core.first.call(null, w_s))].join(""), cljs.core.rest.call(null, result));
-          w_s = G__2887;
-          n_s = G__2888;
-          result = G__2889;
+          var G__9310 = cljs.core.rest.call(null, w_s);
+          var G__9311 = n_s;
+          var G__9312 = cljs.core.cons.call(null, [cljs.core.str(cljs.core.first.call(null, result)), cljs.core.str(cljs.core.first.call(null, w_s))].join(""), cljs.core.rest.call(null, result));
+          w_s = G__9310;
+          n_s = G__9311;
+          result = G__9312;
           continue
         }
       }
@@ -21286,8 +21294,8 @@ prosediff.core.reinsert_spaces = function reinsert_spaces(t_w_list, string) {
   }()))
 };
 prosediff.core.tagged_word_to_HTML = function tagged_word_to_HTML(element, move_class, nil_class, word) {
-  return[cljs.core.str("<"), cljs.core.str(element), cljs.core.str(' class="'), cljs.core.str(cljs.core.apply.call(null, cljs.core.str, cljs.core.cons.call(null, cljs.core.empty_QMARK_.call(null, (new cljs.core.Keyword("\ufdd0'block-ids")).call(null, word)) ? nil_class : move_class, cljs.core.map.call(null, function(p1__2883_SHARP_) {
-    return[cljs.core.str(" pd-block-"), cljs.core.str(p1__2883_SHARP_)].join("")
+  return[cljs.core.str("<"), cljs.core.str(element), cljs.core.str(' class="'), cljs.core.str(cljs.core.apply.call(null, cljs.core.str, cljs.core.cons.call(null, cljs.core.empty_QMARK_.call(null, (new cljs.core.Keyword("\ufdd0'block-ids")).call(null, word)) ? nil_class : move_class, cljs.core.map.call(null, function(p1__9306_SHARP_) {
+    return[cljs.core.str(" pd-block-"), cljs.core.str(p1__9306_SHARP_)].join("")
   }, (new cljs.core.Keyword("\ufdd0'block-ids")).call(null, word))))), cljs.core.str('">'), cljs.core.str(clojure.string.replace.call(null, (new cljs.core.Keyword("\ufdd0'word")).call(null, word), "\n", "<br/>")), cljs.core.str("</"), cljs.core.str(element), cljs.core.str(">")].join("")
 };
 prosediff.core.generate_HTML = function generate_HTML(element, move_class, nil_class, string, tagged_words) {
@@ -21301,10 +21309,10 @@ prosediff.core.clj_js = function clj_js(x) {
       return cljs.core.name.call(null, x)
     }else {
       if(cljs.core.map_QMARK_.call(null, x)) {
-        return cljs.core.reduce.call(null, function(m, p__2892) {
-          var vec__2893 = p__2892;
-          var k = cljs.core.nth.call(null, vec__2893, 0, null);
-          var v = cljs.core.nth.call(null, vec__2893, 1, null);
+        return cljs.core.reduce.call(null, function(m, p__9315) {
+          var vec__9316 = p__9315;
+          var k = cljs.core.nth.call(null, vec__9316, 0, null);
+          var v = cljs.core.nth.call(null, vec__9316, 1, null);
           return cljs.core.assoc.call(null, m, clj_js.call(null, k), clj_js.call(null, v))
         }, cljs.core.ObjMap.EMPTY, x).strobj
       }else {

@@ -27,9 +27,9 @@ jQuery('document').ready(function() {
          blocks = jQuery(this).attr("class")
                               .split(" ")
                               .filter(function(s) { return s.match("pd-block-") != null });
-         blocks.forEach((function(blockID) {
-            jQuery('.' + blockID).removeClass("pd-active-block");
-         }));
+         jQuery('.pd-active-block').each(function(blockID) {
+            jQuery(this).removeClass("pd-active-block");
+         });
       }}, '.pd-move');
 
 });

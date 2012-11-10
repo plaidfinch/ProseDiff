@@ -7,6 +7,9 @@
     \a \b \c \d \e \f \g \h \i \j \k \l \m \n \o \p \q \r \s \t \u \v \w \x \y \z
     \0 \1 \2 \3 \4 \5 \6 \7 \8 \9 \' \-})
 
+(defn log [item]
+  (.log js/console (pr-str item)))
+
 ;; Splits a string to component words, preserving non-word characters as their own words.
 ; Spaces are removed by default; they may be kept in the output by specifying :strip-spaces false. However, note that running the core matching algorithms on input containing spaces has been shown to have an EXTREMELY LARGE real-life performance cost. This is why spaces are stripped and re-inserted after the matching has completed on the words.
 (defn split-to-words [string & {:keys [strip-spaces] :or {strip-spaces true}}]
@@ -110,20 +113,22 @@
 
 ;; Returns a list of longest-common-subsequences in the two strings, which may possibly contain overlapping sequences.
 (defn find-common-subsequences [left-string right-string]
-  ;(println "find-common-subsequences")
+  (log (str "Matching strings of lengths " (count left-string) " (left) and " (count right-string) " (right)."))
   (map reverse
-    (loop [graph (apply match-graph
+    (let [m-g (apply match-graph
                         (map (comp split-to-words #(.toLowerCase %))
-                             [left-string right-string]))
-           live     nil
-           complete nil]
-          (if (empty? graph)
-              (concat live complete)
-              (let [new-sequences (extend-sequences-from-node live (first graph))]
-                (recur (rest graph)
-                       (:matches new-sequences)
-                       (concat complete
-                               (:non-matches new-sequences))))))))
+                             [left-string right-string]))]
+      (log (str "Edges in graph: " (reduce + 0 (map (comp count :right-indices) m-g))))
+      (loop [graph m-g
+             live     nil
+             complete nil]
+            (if (empty? graph)
+                (concat live complete)
+                (let [new-sequences (extend-sequences-from-node live (first graph))]
+                  (recur (rest graph)
+                         (:matches new-sequences)
+                         (concat complete
+                                 (:non-matches new-sequences)))))))))
 
 ;; Takes two ranges (A, B) and returns true iff A's nodes are a subset of B's nodes.
 (defn both-sides-range-subset? [A-range B-range]
@@ -136,6 +141,7 @@
 
 ;; Filters a list of ranges to find only the ranges which map to the largest possible set of words.
 (defn remove-redundant-ranges [ranges-list]
+  (log (str "Unfiltered matches: " (count ranges-list)))
   (let [r-map (pigeonhole ranges-list :left-start identity)]
     (remove empty?
       (map (comp (fn [pair]
@@ -156,6 +162,7 @@
 
 ;; Takes a list of dicts and gives each one a unique numeric ID.
 (defn attach-IDs [dict-list]
+  (log (str "Filtered matches: " (count dict-list)))
   (let [id-list (range (count dict-list))]
        (loop [list-no-ids   dict-list
               ids           id-list
