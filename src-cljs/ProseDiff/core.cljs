@@ -116,8 +116,8 @@
   (log (str "Matching strings of lengths " (count left-string) " (left) and " (count right-string) " (right)."))
   (map reverse
     (let [m-g (apply match-graph
-                        (map (comp split-to-words #(.toLowerCase %))
-                             [left-string right-string]))]
+                     (map (comp split-to-words #(.toLowerCase %))
+                          [left-string right-string]))]
       (log (str "Edges in graph: " (reduce + 0 (map (comp count :right-indices) m-g))))
       (loop [graph m-g
              live     nil
@@ -231,7 +231,7 @@
             [:left-start          :right-start]
             [left-words-index-map right-words-index-map])))
 
-;; Reinserts spaces algorithmically into words using simple rules: put a space after each word except if followed by punctuation or is the last word.
+;; Reinserts spaces into words based on spaces in original string.
 (defn reinsert-spaces [t-w-list string]
   (map (fn [tagged spacified]
          (conj tagged spacified))
