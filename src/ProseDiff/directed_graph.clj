@@ -67,19 +67,19 @@
   "Returns the names of all vertices in graph."
   ([graph] (keys graph)))
 
-(defn vertices
+(defn vertices-map
   "Returns a map with vertices as keys and the data attached as values."
   ([graph] (into {} (for [[v {d :data}] graph] [v d]))))
 
-(defn edges
-  "Returns all edges in graph, in a sequence of vectors of form [<from> <to> <type>]. If an edge-type is specified, returns only edges of that type."
+(defn all-edges
+  "Returns all edges in graph, in a sequence of vectors of form [<from> <to> <type> <label>]. If an edge-type is specified, returns only edges of that type."
   ([graph]
     (apply concat
-           (for [v (vertices graph)]
+           (for [v (keys (vertices graph))]
                 (out-edges graph v))))
   ([graph edge-type]
     (apply concat
-           (for [v (vertices graph)]
+           (for [v (keys (vertices graph))]
                 (out-edges graph v edge-type)))))
 
 (defn vertex-data
@@ -109,19 +109,43 @@
   "Returns the label of the edge."
   ([edge] (nth edge 3)))
 
-(defn contains-edge?
-  "Returns true if graph contains an edge from vertex-1 to vertex-2, false otherwise. If an edge-type is specified, only returns true if there is an edge of edge-type in graph."
+(defn edges-between
+  "Returns a list of edges between two vertices in the format [<from> <to> <type> <label>]. If given an edge-type, returns only edges of that type (which is to say, a singleton list, as there can only be one edge of a type between two vertices)."
   ([graph vertex-1 vertex-2 edge-type]
-   (if (and (get ((graph vertex-1) :out) edge-type)
-            (get ((graph vertex-2) :in) edge-type))
-       true
-       false))
+    (list [vertex-1
+           vertex-2
+           edge-type
+           (get-in graph
+                   [vertex-1 :out edge-type vertex-2])]))
   ([graph vertex-1 vertex-2]
-    (if (some identity
-          (for [edge-type (out-edge-types graph vertex-1)]
-            (contains-edge? graph vertex-1 vertex-2 edge-type)))
-        true
-        false)))
+    (apply concat
+           (for [edge-type (out-edge-types graph vertex-1)]
+                (edges-between graph vertex-1 vertex-2 edge-type)))))
+
+(defn edges
+  "Returns a list of edges in the graph matching the pattern specified, thus combining into a succint interface all the explicit, specific types of edge accessor functions. Takes an (up to) 4-vector of form [<from> <to> <type> <label>] with the :_ keyword (or the vector being too short to have a particular item) representing a wildcard. If the :_ keyword conflicts with the graph, another arbitrary wildcard value may be specified.
+  This is a much more efficient way to retrieve edges maching various specifications than filtering all the edges, as it takes advantage of the graph's structure to dramatically reduce the necessary work."
+  ([graph wildcard [vertex-1 vertex-2 edge-type edge-label]]
+    (let [query-form [(if (or (= vertex-1  wildcard) (= vertex-1  nil)) 0 1)
+                      (if (or (= vertex-2  wildcard) (= vertex-2  nil)) 0 1)
+                      (if (or (= edge-type wildcard) (= edge-type nil)) 0 1)]
+          no-label-filter (if (or (= edge-label wildcard) (= edge-label nil)) true false)]
+         (filter (fn [[v-1 v-2 e-t e-l]]
+                     (or no-label-filter
+                         (= e-l edge-label)))
+                 (condp = query-form
+                        [0 0 0] (all-edges     graph                            )
+                        [0 0 1] (all-edges     graph                   edge-type)
+                        [0 1 0] (in-edges      graph          vertex-2          )
+                        [0 1 1] (in-edges      graph          vertex-2 edge-type)
+                        [1 0 0] (out-edges     graph vertex-1                   )
+                        [1 0 1] (out-edges     graph vertex-1          edge-type)
+                        [1 1 0] (edges-between graph vertex-1 vertex-2          )
+                        [1 1 1] (edges-between graph vertex-1 vertex-2 edge-type)))))
+  ([graph [vertex-1 vertex-2 edge-type edge-label]]
+    (edges graph :_ [vertex-1 vertex-2 edge-type edge-label]))
+  ([graph]
+    (edges graph [])))
 
 (defn remove-edge
   "Return a graph with the edge from vertex-1 to vertex-2 removed. Defaults to edge-type of nil if none supplied. Does nothing if the edge does not exist."
@@ -161,17 +185,13 @@
       vertex-name)))
 
 (defn make-graph
-  "Succinctly construct a graph from a sequence of vectors of form [<from> <to> <optional edge-type>], with an optional additional map of vertices to allow for unconnected vertices and data attachments."
+  "Succinctly construct a graph from a sequence of vectors of form [<from> <to> <edge-type> <edge-label>], with an optional additional list of vertices of form [<name> <data>]. When specifying edges, type and label are optional; when specifying vertices, data is optional."
   ([edges vertices]
-   (reduce (fn [graph e] (apply edge
-                                graph
-                                (if (= 2 (count e))
-                                    (conj e nil)
-                                    e)))
-           (reduce (fn [graph vertex-data-pair] 
-                       (apply vertex graph vertex-data-pair))
+   (reduce (fn [graph e]
+               (apply edge graph e))
+           (reduce (fn [graph v] (apply vertex graph v))
                    (make-graph)
-                   (for [vertex-data-pair vertices] vertex-data-pair))
+                   vertices)
            edges))
   ([edges]
     (make-graph edges nil))

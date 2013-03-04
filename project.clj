@@ -10,7 +10,7 @@
         ; The standard ClojureScript compiler options:
         ; (See the ClojureScript compiler documentation for details.)
         :compiler {
-          :output-to "prosediff.js"  ; default: main.js in current directory
+          :output-to "prosediff.js"
           :optimizations :whitespace
           :pretty-print true}}]})
 
