@@ -24,17 +24,17 @@
   ([graph vertex-1 vertex-2]
     (edge graph vertex-1 vertex-2 nil nil)))
 
-(defn out-edge-types
+(defn- out-edge-types
   "Returns a sequence of all the types of edges pointing from the vertex."
   ([graph vertex-name]
    (-> vertex-name graph :out keys)))
 
-(defn in-edge-types
+(defn- in-edge-types
   "Returns a sequence of all the types of edges pointing at the vertex."
   ([graph vertex-name]
    (-> vertex-name graph :in keys)))
 
-(defn out-edges
+(defn- out-edges
   "Return all edges outward-directed from the vertex in a sequence of vectors of form [<from> <to> <type> <label>]. If an edge-type is supplied, returns only edges of that type."
   ([graph vertex-name]
     (let [o-v (get-in graph [vertex-name :out])]
@@ -46,7 +46,7 @@
       (for [[other-vertex edge-label] (o-v edge-type)]
         [vertex-name other-vertex edge-type edge-label]))))
 
-(defn in-edges
+(defn- in-edges
   "Return all edges inward-directed to the vertex in a sequence of vectors of form [<from> <to> <type> <label>].If an edge-type is supplied, returns only edges of that type."
   ([graph vertex-name]
     (let [i-v (get-in graph [vertex-name :in])]
@@ -63,11 +63,11 @@
   ([graph vertex-name]
     (graph vertex-name)))
 
-(defn vertex-names
+(defn- all-vertices-names
   "Returns the names of all vertices in graph."
   ([graph] (keys graph)))
 
-(defn vertices-map
+(defn all-vertices-map
   "Returns a map with vertices as keys and the data attached as values."
   ([graph] (into {} (for [[v {d :data}] graph] [v d]))))
 
@@ -75,22 +75,18 @@
   "Returns all edges in graph, in a sequence of vectors of form [<from> <to> <type> <label>]. If an edge-type is specified, returns only edges of that type."
   ([graph]
     (apply concat
-           (for [v (keys (vertices graph))]
+           (for [v (keys (vertices-map graph))]
                 (out-edges graph v))))
   ([graph edge-type]
     (apply concat
-           (for [v (keys (vertices graph))]
+           (for [v (keys (vertices-map graph))]
                 (out-edges graph v edge-type)))))
 
-(defn vertex-data
-  "Returns the data attached to a vertex in the graph."
-  ([graph vertex-name] (get-in graph [vertex-name :data])))
-
-(defn edge-types
+(defn all-edge-types
   "Returns a sequence of all edge types present in the graph."
   ([graph]
     (apply (comp seq set concat)
-           (for [v (vertices graph)]
+           (for [v (vertices-map graph)]
                 (out-edge-types graph v)))))
 
 (defn edge-start
@@ -150,7 +146,7 @@
 (defn remove-edge
   "Return a graph with the edge from vertex-1 to vertex-2 removed. Defaults to edge-type of nil if none supplied. Does nothing if the edge does not exist."
   ([graph vertex-1 vertex-2 edge-type]
-   (if (contains-edge? graph vertex-1 vertex-2 edge-type)
+   (if (edges graph [vertex-1 vertex-2 edge-type])
        (-> graph
            ; remove vertices from in and out lists
            (update-in ,,
