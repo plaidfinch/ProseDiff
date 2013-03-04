@@ -12,7 +12,9 @@
         (assoc graph vertex-name {:out {} :in {} :data nil}))))
 
 (defn edge
-  "Returns graph with an edge from vertex-1 to vertex-2 added to it. Creates vertices if they do not already exist. If no edge-type is supplied, defaults to nil. If no edge-label is supplied, defaults to nil. If the edge here of this type already exists, changes label (that is, there cannot be two edges of same origin, same destination, same type)."
+  "Returns graph with an edge from vertex-1 to vertex-2 added to it. Creates vertices if they do not already exist. If no edge-type is supplied, defaults to nil. If no edge-label is supplied, defaults to nil. If the edge here of this type already exists, changes label (that is, there cannot be two edges of same origin, same destination, same type). Idiomatic usage is to give a vector of [vertex-1 vertex-2 edge-type edge-label], but can also take these as arguments rather than encapsulated as a vector."
+  ([graph edge-vector]
+    (apply edge graph edge-vector))
   ([graph vertex-1 vertex-2 edge-type edge-label] 
    (-> graph 
        (vertex ,, vertex-1)
@@ -177,9 +179,8 @@
 (defn make-graph
   "Succinctly construct a graph from a sequence of vectors of form [<from> <to> <edge-type> <edge-label>], with an optional additional list of vertices of form [<name> <data>]. When specifying edges, type and label are optional; when specifying vertices, data is optional."
   ([edges vertices]
-   (reduce (fn [graph e]
-               (apply edge graph e))
-           (reduce (fn [graph v] (apply vertex graph v))
+   (reduce #(edge %1 %2)
+           (reduce #(apply vertex %1 %2)
                    (make-graph)
                    vertices)
            edges))
