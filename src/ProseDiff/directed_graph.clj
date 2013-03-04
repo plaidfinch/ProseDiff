@@ -24,6 +24,22 @@
   ([graph vertex-1 vertex-2]
     (edge graph vertex-1 vertex-2 nil nil)))
 
+(defn edge-start
+  "Returns the vertex name at which the edge begins."
+  ([edge] (nth edge 0)))
+
+(defn edge-end
+  "Returns the vertex name at which the edge ends."
+  ([edge] (nth edge 1)))
+
+(defn edge-type
+  "Returns the type of the edge."
+  ([edge] (nth edge 2)))
+
+(defn edge-label
+  "Returns the label of the edge."
+  ([edge] (nth edge 3)))
+
 (defn- out-edge-types
   "Returns a sequence of all the types of edges pointing from the vertex."
   ([graph vertex-name]
@@ -63,15 +79,11 @@
   ([graph vertex-name]
     (graph vertex-name)))
 
-(defn- all-vertices-names
-  "Returns the names of all vertices in graph."
-  ([graph] (keys graph)))
-
-(defn all-vertices-map
+(defn all-vertices
   "Returns a map with vertices as keys and the data attached as values."
   ([graph] (into {} (for [[v {d :data}] graph] [v d]))))
 
-(defn all-edges
+(defn- all-edges
   "Returns all edges in graph, in a sequence of vectors of form [<from> <to> <type> <label>]. If an edge-type is specified, returns only edges of that type."
   ([graph]
     (apply concat
@@ -83,29 +95,11 @@
                 (out-edges graph v edge-type)))))
 
 (defn all-edge-types
-  "Returns a sequence of all edge types present in the graph."
+  "Returns a set of all edge types present in the graph."
   ([graph]
-    (apply (comp seq set concat)
-           (for [v (vertices-map graph)]
-                (out-edge-types graph v)))))
+    (->> graph edges (map edge-type) set)))
 
-(defn edge-start
-  "Returns the vertex name at which the edge begins."
-  ([edge] (nth edge 0)))
-
-(defn edge-end
-  "Returns the vertex name at which the edge ends."
-  ([edge] (nth edge 1)))
-
-(defn edge-type
-  "Returns the type of the edge."
-  ([edge] (nth edge 2)))
-
-(defn edge-label
-  "Returns the label of the edge."
-  ([edge] (nth edge 3)))
-
-(defn edges-between
+(defn- edges-between
   "Returns a list of edges between two vertices in the format [<from> <to> <type> <label>]. If given an edge-type, returns only edges of that type (which is to say, a singleton list, as there can only be one edge of a type between two vertices)."
   ([graph vertex-1 vertex-2 edge-type]
     (list [vertex-1
