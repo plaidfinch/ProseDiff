@@ -89,17 +89,12 @@
   "Returns all edges in graph, in a sequence of vectors of form [<from> <to> <type> <label>]. If an edge-type is specified, returns only edges of that type."
   ([graph]
     (apply concat
-           (for [v (keys (vertices-map graph))]
+           (for [v (keys (all-vertices graph))]
                 (out-edges graph v))))
   ([graph edge-type]
     (apply concat
-           (for [v (keys (vertices-map graph))]
+           (for [v (keys (all-vertices graph))]
                 (out-edges graph v edge-type)))))
-
-(defn all-edge-types
-  "Returns a set of all edge types present in the graph."
-  ([graph]
-    (->> graph edges (map edge-type) set)))
 
 (defn- edges-between
   "Returns a list of edges between two vertices in the format [<from> <to> <type> <label>]. If given an edge-type, returns only edges of that type (which is to say, a singleton list, as there can only be one edge of a type between two vertices)."
@@ -175,6 +170,11 @@
               (concat (out-edges graph vertex-name)
                       (in-edges graph vertex-name)))
       vertex-name)))
+
+(defn all-edge-types
+  "Returns a set of all edge types present in the graph."
+  ([graph]
+    (->> graph edges (map edge-type) set)))
 
 (defn make-graph
   "Succinctly construct a graph from a sequence of vectors of form [<from> <to> <edge-type> <edge-label>], with an optional additional list of vertices of form [<name> <data>]. When specifying edges, type and label are optional; when specifying vertices, data is optional."

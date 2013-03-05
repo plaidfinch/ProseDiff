@@ -2,13 +2,63 @@
   (:require [prosediff.directed-graph :as dg]))
 
 (defn text-deref
-  "Takes the source text as a vector, the current ending character, and an interval 2-tuple where :# is a reference to whatever the current value of current-end is. Returns the corresponding chunk of text, as a vector of characters."
+  "Takes the source text as a vector, the current ending character, and an interval 2-tuple where the keyword :# is a reference to whatever the current value of current-end is. Returns the corresponding chunk of text, as a vector of characters."
   ([text-vec current-end interval]
     (subvec text-vec
-            (dec (first interval))
+            (if (= :# (first interval))
+                current-end
+                (dec (first interval)))
             (if (= :# (second interval))
                 current-end
-                (second interval)))))
+                (second interval))))
+  ([text-vec interval]
+    (text-deref text-vec (count text-vec) interval)))
+
+(defn empty-suffix-tree
+  "Returns an empty suffix tree."
+  ([] (dg/make-graph [] [[:root]])))
+
+(defn starting-active-point
+  "Returns the starting value of the active point."
+  ([] {:active-node :root
+       :active-edge nil
+       :active-length 0}))
+
+(defn terminator
+  "Takes a number and returns a terminating symbol of that number."
+  ([n] (with-meta (symbol (str "$" n))
+                  {:terminator true :number n})))
+
+(defn terminators
+  "Returns a lazy sequence of terminating symbols with metadata identifying them as such."
+  ([] (map terminator (iterate inc 0))))
+
+(defn terminator?
+  "Determines if a symbol is a terminating symbol based on its metadata."
+  ([s] (if (-> s meta :terminator) true false)))
+
+(defn terminator-number
+  "Returns the number of a terminating symbol given."
+  ([s] (-> s meta :number)))
+
+(defn ukkonen-construct
+  "Constructs a suffix tree to represent text-vec. Uses Ukkonen's algorithm."
+  ([text-vec tree active-point remainder current-end]
+    ; (let [current-symbol (text-deref text-vec current-end [:# :#])]
+    ;      (filter #(= current-symbol
+    ;                  (first (text-deref text-vec current-end (dg/edge-label %))))
+    ;              (dg/edges tree [(:active-node active-point) :_ nil])))
+    text-vec))
+
+(defn build-suffix-tree
+  "Constructs a suffix tree to represent the string(s). Uses Ukkonen's algorithm."
+  ([& strings]
+    (ukkonen-construct (apply (comp vec concat)
+                              (interleave strings (map vector (terminators))))
+                       (empty-suffix-tree)
+                       (starting-active-point)
+                       1
+                       0)))
 
 ;; NOTE: This function is rather ugly; it's not that important that it be elegant, but it could certainly be vastly more so.
 (defn- dot-edge-str
@@ -52,12 +102,12 @@
   ([text-vec tree active-point current-end]
     (str "digraph SuffixTree {\n"
          "\tnode [shape=point];\n"
-         "\tnode [label=""];\n\n"
+         "\tnode [label=""];\n"
          "\troot [width=0.1];\n"
          "\t" (if (keyword? (active-point :active-node))
                   (name (active-point :active-node))
                   (active-point :active-node))
-         " [color=red, width=0.1];\n\n"
+         " [color=red, width=0.1];\n"
          (apply str
                 (map (partial dot-edge-str text-vec active-point current-end)
                      (dg/edges tree)))
