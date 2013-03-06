@@ -8,10 +8,10 @@
           :else x)))
 
 (defn safe-subvec
-  "Takes the subvec of the vector given, but allowing out-of-range specifications."
+  "Takes the subvec of the vector given, but allowing out-of-range specifications and backwards indices."
   ([v start end]
-    (subvec v (clip-to-interval 0 (dec (count v)) (min start end))
-              (clip-to-interval 0 (dec (count v)) (max start end)))))
+    (subvec v (clip-to-interval 0 (count v) (min start end))
+              (clip-to-interval 0 (count v) (max start end)))))
 
 
 (defn interval-deref
@@ -35,7 +35,8 @@
 (defn active-point-deref
   "Takes an active point, a tree, and a text-vec, and returns the symbol at the active point."
   ([text-vec tree active-point]
-    (if (:active-edge active-point)
+    (if (and (:active-edge active-point)
+             (> (:active-length active-point) 0))
         (nth text-vec
              (+ (dec (:active-length active-point))
                 (some identity
@@ -82,8 +83,7 @@
           old-edge (first (dg/edges tree [(:active-node active-point)
                                           (:active-edge active-point)
                                           :normal]))]
-      (if (and (:active-edge active-point)
-               (> (:active-length active-point) 0))
+      (if (active-point-deref (repeat true) tree active-point)
           (-> tree
               (dg/remove-edge ,, old-edge)
               (dg/edge ,, [(dg/edge-start old-edge)
@@ -109,7 +109,7 @@
   ([text-vec tree active-point remainder current-end]
     (let [current-symbol (first (interval-deref text-vec current-end [:# :#]))
           active-symbol  (active-point-deref text-vec tree active-point)]
-         (if (= current-end (dec (count text-vec)))
+         (if (= current-end (count text-vec))
              tree
              (recur text-vec
                     (add-child-at tree current-end active-point)
@@ -142,30 +142,22 @@
              (dg/edge-end edge))
          (if (= :suffix (dg/edge-type edge))
              " [style=dotted]"
-             (str " [label=\""
-                  (let [label (interval-deref text-vec
-                                              current-end
-                                              (dg/edge-label edge))]
-                       (str
-                         (apply str (subvec label 0 (active-point :active-length)))
-                         (if (and (= (first (interval-deref text-vec
-                                                            current-end
-                                                            (dg/edge-label edge)))
-                                      (active-point :active-edge))
-                                  (= (active-point :active-node) (dg/edge-start edge)))
-                             " | ")
-                         (apply str (subvec label (active-point :active-length)))))
-                  "\""
-                  (if (and (= (first (interval-deref text-vec
-                                                     current-end
-                                                     (dg/edge-label edge)))
-                              (active-point :active-edge))
-                           (= (active-point :active-node) (dg/edge-start edge)))
-                      ", color=blue")
-                  "]"))
+             (let [label (interval-deref text-vec
+                                         current-end
+                                         (dg/edge-label edge))
+                   is-active-edge (and (= (first label)
+                                          (active-point :active-edge))
+                                       (= (active-point :active-node) (dg/edge-start edge)))]
+                  (str " [label=\""
+                       (apply str (subvec label 0 (active-point :active-length)))
+                       (if is-active-edge " | ")
+                       (apply str (subvec label (active-point :active-length)))
+                       "\""
+                       (if is-active-edge ", color=blue")
+                       "]")))
          ";\n"))
   ([text-vec edge]
-    (dot-edge-str text-vec (starting-active-point) (dec (count text-vec)) edge)))
+    (dot-edge-str text-vec (starting-active-point) (count text-vec) edge)))
 
 (defn tree-to-dot
   "Generates a GraphViz DOT format representation of the tree, with the active point displayed on it. Takes a tree, an active point, and the text."
