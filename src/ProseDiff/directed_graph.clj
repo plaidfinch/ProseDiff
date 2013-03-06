@@ -159,7 +159,12 @@
                                   d))))
        graph))
   ([graph vertex-1 vertex-2]
-    (remove-edge graph vertex-1 vertex-2 nil)))
+    (remove-edge graph vertex-1 vertex-2 nil))
+  ([graph edge-vector]
+    (apply remove-edge graph edge-vector))
+  ([graph vertex-1 vertex-2 edge-type edge-label]
+    (if (edges graph [vertex-1 vertex-2 edge-type edge-label])
+        (remove-edge graph [vertex-1 vertex-2 edge-type]))))
 
 (defn remove-vertex
   "Return a graph with the vertex and all edges to and from it removed."
