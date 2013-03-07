@@ -109,7 +109,7 @@
   ([text-vec tree active-point remainder current-end]
     (let [current-symbol (first (interval-deref text-vec current-end [:# :#]))
           active-symbol  (active-point-deref text-vec tree active-point)]
-         (if (= current-end (count text-vec))
+         (if (> current-end (count text-vec))
              tree
              (recur text-vec
                     (add-child-at tree current-end active-point)
@@ -117,21 +117,24 @@
                     remainder
                     (inc current-end))))))
 
+(defn combine-with-terminators
+  "Takes multiple sequences and combines them with special terminator symbols to delineate the end of each."
+  ([& strings]
+    (apply (comp vec concat)
+           (interleave strings (map vector terminators)))))
 
 (defn build-suffix-tree
   "Constructs a suffix tree to represent the string(s). Uses Ukkonen's algorithm."
   ([& strings]
-    (ukkonen-construct (apply (comp vec concat)
-                              (interleave strings (map vector terminators)))
+    (ukkonen-construct (apply combine-with-terminators strings)
                        (empty-suffix-tree)
                        (starting-active-point)
                        1
                        1)))
 
-;; NOTE: This function is rather ugly; it's not that important that it be elegant, but it could certainly be vastly more so.
 (defn- dot-edge-str
   "Takes a text, active point, current end, and edge vector and returns a string representing that edge in DOT format. Not a general procedure; tailored specifically for displaying suffix trees in the representation this program uses."
-  ([text-vec active-point current-end edge]
+  ([text-vec tree active-point current-end edge]
     (str "\t"
          (if (keyword? (dg/edge-start edge))
              (name (dg/edge-start edge))
@@ -146,18 +149,19 @@
                                          current-end
                                          (dg/edge-label edge))
                    is-active-edge (and (= (first label)
-                                          (active-point :active-edge))
-                                       (= (active-point :active-node) (dg/edge-start edge)))]
+                                          (active-point-deref text-vec tree active-point))
+                                       (= (:active-node active-point) (dg/edge-start edge))
+                                       (:active-edge active-point))]
                   (str " [label=\""
-                       (apply str (subvec label 0 (active-point :active-length)))
+                       (apply str (subvec label 0 (:active-length active-point)))
                        (if is-active-edge " | ")
-                       (apply str (subvec label (active-point :active-length)))
+                       (apply str (subvec label (:active-length active-point)))
                        "\""
                        (if is-active-edge ", color=blue")
                        "]")))
          ";\n"))
-  ([text-vec edge]
-    (dot-edge-str text-vec (starting-active-point) (count text-vec) edge)))
+  ([tree text-vec edge]
+    (dot-edge-str text-vec tree (starting-active-point) (count text-vec) edge)))
 
 (defn tree-to-dot
   "Generates a GraphViz DOT format representation of the tree, with the active point displayed on it. Takes a tree, an active point, and the text."
@@ -171,7 +175,7 @@
                   (active-point :active-node))
          " [color=red, width=0.1];\n"
          (apply str
-                (map (partial dot-edge-str text-vec active-point current-end)
+                (map (partial dot-edge-str text-vec tree active-point current-end)
                      (dg/edges tree)))
          "}"))
   ([text-vec tree]
@@ -180,7 +184,12 @@
          "\tnode [label=""];\n"
          "\troot [width=0.1];\n"
          (apply str
-                (map (partial dot-edge-str text-vec)
+                (map (partial dot-edge-str tree text-vec)
                      (dg/edges tree)))
          "}")))
 
+(defn make-dot-tree
+  "Runs the algorithm and directly outputs a DOT format tree."
+  ([& strings]
+    (tree-to-dot (apply combine-with-terminators strings)
+                 (apply build-suffix-tree strings))))
