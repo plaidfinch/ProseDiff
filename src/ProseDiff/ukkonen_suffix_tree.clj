@@ -1,9 +1,7 @@
 (ns prosediff.ukkonen-suffix-tree
   (:require [prosediff.directed-graph :as dg]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  ACCESS THE TEXT VIA INTERVALS AND ACTIVE POINTS  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  Dereferencing functions for various pointers into the text...
 
 (defn clip
   "Clips x to an interval: if x < low, returns low; if x > high, returns high; else returns x."
@@ -67,9 +65,7 @@
     (if (not (nil? edge))
         (->> edge dg/edge-label (interval-deref text-vec current-end ,,)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  STARTING VALUES FOR SUFFIX TREE AND ACTIVE POINT  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  Starting values for suffix tree and active point...
 
 (defn empty-suffix-tree
   "Returns an empty suffix tree."
@@ -81,9 +77,7 @@
        :active-edge nil
        :active-length 0}))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  CREATE AND MANIPULATE TERMINATING SYMBOLS  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  Create and manipulate terminating symbols...
 
 (defn terminator
   "Takes a number and returns a terminating symbol of that number."
@@ -107,6 +101,8 @@
   ([& strings]
     (apply (comp vec concat)
            (interleave strings (map vector terminators)))))
+
+;;  The bulk of the algorithm proper...
 
 (defn new-node-name
   "Returns a new node name that will not conflict with the current nodes in the tree. Assumes that all nodes save :root are integer-type and sequential, which is a valid assumption if this is the only way used to generate new nodes."
@@ -188,9 +184,7 @@
                        1
                        1)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  PRINTING FUNCTIONS  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  Printing functions...
 
 (defn- dot-edge-str
   "Takes a text, active point, current end, and edge vector and returns a string representing that edge in DOT format. Not a general procedure; tailored specifically for displaying suffix trees in the representation this program uses."
