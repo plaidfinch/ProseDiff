@@ -1,7 +1,12 @@
 (ns prosediff.ukkonen-suffix-tree
   (:require [prosediff.directed-graph :as dg]))
 
-(defn clip-to-interval
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  ACCESS THE TEXT VIA INTERVALS AND ACTIVE POINTS  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn clip
+  "Clips x to an interval: if x < low, returns low; if x > high, returns high; else returns x."
   ([low high x]
     (cond (< x low)  low
           (> x high) high
@@ -10,20 +15,31 @@
 (defn safe-subvec
   "Takes the subvec of the vector given, but allowing out-of-range specifications and backwards indices."
   ([v start end]
-    (subvec v (clip-to-interval 0 (count v) (min start end))
-              (clip-to-interval 0 (count v) (max start end)))))
+    (subvec v (clip 0 (count v) (min start end))
+              (clip 0 (count v) (max start end)))))
 
+(defn reify-interval
+  "Takes the current end and an interval 2-tuple, and substitutes the current end into the interval wherever :# is present."
+  ([current-end interval]
+    [(if (= :# (first interval))
+        current-end
+        (first interval))
+     (if (= :# (second interval))
+         current-end
+         (second interval))]))
+
+(defn inclusive-to-exclusive-interval
+  "Converts inclusive interval specifications (used internally to refer to intervals of text) into exclusive specifications, like those used by subvec."
+  ([interval]
+    ((juxt (comp dec first) second) interval)))
 
 (defn interval-deref
   "Takes the source text as a vector, the current ending index, and an interval 2-tuple where the keyword :# is a reference to whatever the current value of current-end is. Returns the corresponding chunk of text, as a vector of characters."
   ([text-vec current-end interval]
-    (safe-subvec text-vec
-                 (if (= :# (first interval))
-                     current-end
-                     (dec (first interval)))
-                 (if (= :# (second interval))
-                     current-end
-                     (second interval))))
+    (apply safe-subvec
+           text-vec
+           (inclusive-to-exclusive-interval
+             (reify-interval current-end interval))))
   ([text-vec interval]
     (interval-deref text-vec (count text-vec) interval)))
 
@@ -45,6 +61,16 @@
                                            (:active-edge active-point)
                                            :normal]))))))))
 
+(defn edge-deref
+  "Takes the text-vec and an edge vector and returns the subvector to which the edge corresponds."
+  ([text-vec current-end edge]
+    (if (not (nil? edge))
+        (->> edge dg/edge-label (interval-deref text-vec current-end ,,)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  STARTING VALUES FOR SUFFIX TREE AND ACTIVE POINT  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn empty-suffix-tree
   "Returns an empty suffix tree."
   ([] (dg/make-graph [] [[:root]])))
@@ -54,6 +80,10 @@
   ([] {:active-node :root
        :active-edge nil
        :active-length 0}))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  CREATE AND MANIPULATE TERMINATING SYMBOLS  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn terminator
   "Takes a number and returns a terminating symbol of that number."
@@ -72,12 +102,18 @@
   "Returns the number of a terminating symbol given."
   ([s] (-> s meta :number)))
 
+(defn combine-with-terminators
+  "Takes multiple sequences and combines them with special terminator symbols to delineate the end of each."
+  ([& strings]
+    (apply (comp vec concat)
+           (interleave strings (map vector terminators)))))
+
 (defn new-node-name
   "Returns a new node name that will not conflict with the current nodes in the tree. Assumes that all nodes save :root are integer-type and sequential, which is a valid assumption if this is the only way used to generate new nodes."
   ([tree] (inc (reduce max 0 (filter number? (keys tree))))))
 
 (defn add-child-at
-  "Adds a child of the tree at the current active point and labeled to start at the current end."
+  "Adds a child of the tree at the current active point and labeled to start at the current end. If the active point is inside an edge, splits the edge and creates a new node in order to insert the child."
   ([tree current-end active-point]
     (let [new-node (new-node-name tree)
           old-edge (first (dg/edges tree [(:active-node active-point)
@@ -104,24 +140,44 @@
                          :normal
                          [current-end :#]])))))
 
+(defn matching-edge
+  "Finds the outgoing edge which begins with the symbol specified, if any. Returns nil if there is no such edge."
+  ([text-vec tree active-node current-end s]
+    (first (filter #(= s (first (edge-deref text-vec current-end %)))
+                   (dg/edges tree [active-node])))))
+
+(defn test-and-split
+  "Takes a text-vec, tree, active point, and current-symbol, and adds a child node at the active point if this is necessary. Annotates the returned tree with boolean meta-data key :changed to reflect whether an insertion was necessary. This is essentially equivalent to the test-and-split procedure from the original Ukkonen paper."
+  ([text-vec tree active-point current-end current-symbol]
+    (if (or (active-point-deref text-vec         ; Dereference the active point -- if the result
+                                tree             ; is nil, this means it is not on an edge. If
+                                active-point)    ; it's not on an edge ...
+            (matching-edge text-vec                       ; ... then check to see if there exists
+                           tree                           ; a matching outgoing (child) node from
+                           (:active-node active-point)    ; the current node. If there is such a
+                           current-end                    ; node,  or if there is a matching symbol 
+                           current-symbol))               ; found at the active point above, then
+        (with-meta tree                                   ; we don't have to change anything about
+                   {:changed false})                      ; the tree. If we do have to change
+        (with-meta (add-child-at tree current-end active-point) ; something, then split an edge
+                   {:changed true}))))                          ; at the current active-point.
+
 (defn ukkonen-construct
   "Constructs a suffix tree to represent text-vec. Uses Ukkonen's algorithm."
   ([text-vec tree active-point remainder current-end]
-    (let [current-symbol (first (interval-deref text-vec current-end [:# :#]))
-          active-symbol  (active-point-deref text-vec tree active-point)]
+    ; (println "STEP" current-end)
+    ; (println "active point:" active-point)
+    ; (println "remainder:" remainder)
+    ; (println "current end:" current-end)
+    ; (println (tree-to-dot text-vec tree active-point current-end))
+    (let [current-symbol (first (interval-deref text-vec current-end [:# :#]))]
          (if (> current-end (count text-vec))
              tree
              (recur text-vec
-                    (add-child-at tree current-end active-point)
+                    (test-and-split text-vec tree active-point current-end current-symbol)
                     active-point
                     remainder
                     (inc current-end))))))
-
-(defn combine-with-terminators
-  "Takes multiple sequences and combines them with special terminator symbols to delineate the end of each."
-  ([& strings]
-    (apply (comp vec concat)
-           (interleave strings (map vector terminators)))))
 
 (defn build-suffix-tree
   "Constructs a suffix tree to represent the string(s). Uses Ukkonen's algorithm."
@@ -131,6 +187,10 @@
                        (starting-active-point)
                        1
                        1)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  PRINTING FUNCTIONS  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- dot-edge-str
   "Takes a text, active point, current end, and edge vector and returns a string representing that edge in DOT format. Not a general procedure; tailored specifically for displaying suffix trees in the representation this program uses."
