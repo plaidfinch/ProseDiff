@@ -9,7 +9,7 @@
   ([graph vertex-name]
     (if (graph vertex-name)
         graph
-        (assoc graph vertex-name {:out {} :in {} :data nil}))))
+        (assoc graph vertex-name {:out {} :in {}}))))
 
 (defn edge
   "Returns graph with an edge from vertex-1 to vertex-2 added to it. Creates vertices if they do not already exist. If no edge-type is supplied, defaults to nil. If no edge-label is supplied, defaults to nil. If the edge here of this type already exists, changes label (that is, there cannot be two edges of same origin, same destination, same type). Idiomatic usage is to give a vector of [vertex-1 vertex-2 edge-type edge-label], but can also take these as arguments rather than encapsulated as a vector."
