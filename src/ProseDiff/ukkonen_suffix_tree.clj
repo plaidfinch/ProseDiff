@@ -4,7 +4,7 @@
 ;;  Some helpful utility functions...
 
 (def debug
-  true)
+  false)
 
 (defn update-many-in
   "Takes a map and any number of vectors of format [[k & ks] f & args] and uses update-in to update all these values in the map."
@@ -35,19 +35,15 @@
 ;;  Dereferencing functions for various pointers into the text...
 
 (defn reify-interval
-  "Takes the current end and an interval 2-tuple, and substitutes the current end into the interval wherever :# is present."
+  "Takes the current end and an interval 2-tuple, and substitutes the current end into the interval wherever an end-symbol is present."
   ([current-end [start end]]
-   [(if (end-symbol? start)
-        current-end
-        start)
-    (if (end-symbol? end)
-        current-end
-        end)]))
+   [(if (end-symbol? start) current-end start)
+    (if (end-symbol? end)   current-end end)]))
 
 (defn inclusive-to-exclusive-interval
   "Converts inclusive interval specifications (used internally to refer to intervals of text) into exclusive specifications, like those used by subvec."
-  ([interval]
-   ((juxt (comp dec first) second) interval)))
+  ([[start end]]
+   [(dec start) end]))
 
 (defn interval-deref
   "Takes the source text as a vector, the current ending index, and an interval 2-tuple where the keyword :# is a reference to whatever the current value of current-end is. Returns the corresponding chunk of text, as a vector of characters."
@@ -172,7 +168,7 @@
                 (dg/edge  ,, [start-node new-node :normal [current-end (end-symbol 1)]]))))))
 
 (defn matching-edge
-  "Finds the outgoing edge which begins with the symbol specified, if any. Returns nil if there is no such edge."
+  "If the active point is not on an edge, finds the outgoing edge from the active node which begins with the symbol specified. If the active point is on an edge, returns that edge iff the symbol matches on that edge at the current point. Otherwise, returns nil."
   ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} s]
    (if (> active-length 0)
        (if (= s (active-point-deref text-vec tree active-point))
@@ -182,9 +178,7 @@
 (defn test-and-split
   "Adds a child node at the active point if this is necessary. This is essentially equivalent to the test-and-split procedure from the original Ukkonen paper."
   ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} current-end current-symbol] 
-   (if (or (= current-symbol (active-point-deref text-vec tree active-point))
-           (and (matching-edge text-vec tree active-point current-symbol)
-                (zero? active-length)))
+   (if (matching-edge text-vec tree active-point current-symbol)
        tree
        (add-child-at tree text-vec current-end active-point))))
 
@@ -203,7 +197,7 @@
                  (println "current end:" current-end)
                  (println (tree-to-dot text-vec tree active-point current-end))))
    (if (> current-end (count text-vec))
-       (vary-meta tree assoc :finished true)
+       (vary-meta tree assoc ::finished true)
        (if (zero? remainder)
            (recur text-vec tree active-point 1 current-end)
            (let [current-symbol (index-deref text-vec current-end)
