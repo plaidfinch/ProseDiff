@@ -36,13 +36,13 @@
 
 (defn reify-interval
   "Takes the current end and an interval 2-tuple, and substitutes the current end into the interval wherever :# is present."
-  ([current-end interval]
-   [(if (= :# (first interval))
+  ([current-end [start end]]
+   [(if (end-symbol? start)
         current-end
-        (first interval))
-    (if (= :# (second interval))
+        start)
+    (if (end-symbol? end)
         current-end
-        (second interval))]))
+        end)]))
 
 (defn inclusive-to-exclusive-interval
   "Converts inclusive interval specifications (used internally to refer to intervals of text) into exclusive specifications, like those used by subvec."
@@ -90,17 +90,14 @@
 
 (defn empty-suffix-tree
   "Returns an empty suffix tree."
-  ([] (with-meta
-        (dg/make-graph [] [[:root]])
-        {:changed true
-         :finished false})))
+  ([] (dg/make-graph [] [[:root]])))
 
-;;  Create and manipulate terminating symbols...
+;;  Create and manipulate terminating symbols and end symbols...
 
 (defn terminator
   "Takes a number and returns a terminating symbol of that number."
   ([n] (with-meta (symbol (str \$ n))
-                  {:terminator true :number n})))
+                  {::terminator true ::number n})))
 
 (def terminators
   "A lazy sequence of terminating symbols with metadata identifying them as such."
@@ -108,17 +105,34 @@
 
 (defn terminator?
   "Determines if a symbol is a terminating symbol based on its metadata."
-  ([s] (if (-> s meta :terminator) true false)))
+  ([s] (if (-> s meta ::terminator) true false)))
 
 (defn terminator-number
   "Returns the number of a terminating symbol given."
-  ([s] (-> s meta :number)))
+  ([s] (if (terminator? s) (-> s meta ::number))))
 
 (defn combine-with-terminators
   "Takes multiple sequences and combines them with special terminator symbols to delineate the end of each."
   ([& strings]
    (apply (comp vec concat)
           (interleave strings (map vector terminators)))))
+
+(defn end-symbol
+  "Takes a number and returns an end-symbol of that number."
+  ([n] (with-meta (symbol (str \# n))
+                  {::end-symbol true ::number n})))
+
+(def end-symbols
+  "A lazy sequence of end-symbols with metadata identifying them as such."
+  (map end-symbol (iterate inc 0)))
+
+(defn end-symbol?
+  "Determines if a symbol is an end-symbol based on its metadata."
+  ([s] (if (-> s meta ::end-symbol) true false)))
+
+(defn end-symbol-number
+  "Returns the number of an end-symbol given."
+  ([s] (if (end-symbol? s) (-> s meta ::number))))
 
 ;;  The bulk of the algorithm proper...
 
@@ -155,7 +169,7 @@
                 ; Notate what symbol child starts with...
                 (assoc-in ,, [start-node :children (index-deref text-vec current-end)] new-node)
                 ; Create it here...
-                (dg/edge  ,, [start-node new-node :normal [current-end :#]]))))))
+                (dg/edge  ,, [start-node new-node :normal [current-end (end-symbol 1)]]))))))
 
 (defn matching-edge
   "Finds the outgoing edge which begins with the symbol specified, if any. Returns nil if there is no such edge."
@@ -166,21 +180,19 @@
        (get-in tree [active-node :children s]))))
 
 (defn test-and-split
-  "Adds a child node at the active point if this is necessary. Annotates the returned tree with boolean meta-data key :changed to reflect whether an insertion was necessary. This is essentially equivalent to the test-and-split procedure from the original Ukkonen paper."
+  "Adds a child node at the active point if this is necessary. This is essentially equivalent to the test-and-split procedure from the original Ukkonen paper."
   ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} current-end current-symbol] 
    (if (or (= current-symbol (active-point-deref text-vec tree active-point))
            (and (matching-edge text-vec tree active-point current-symbol)
                 (zero? active-length)))
-       (vary-meta tree
-                  assoc :changed false)
-       (vary-meta (add-child-at tree text-vec current-end active-point)
-                  assoc :changed true))))
+       tree
+       (add-child-at tree text-vec current-end active-point))))
 
 ; TODO! Go through entire remainder, inserting as needed, and keep track of edge-split inserts during this in a list. Then (reduce (partial dg/edge tree) (map #(concat % [:suffix]) (partition 2 1 list-of-new-nodes))).
 
 ; TODO! Move active-point around tree using proper rules: if root, decrease length; else, move by suffix link at active-node; else, move to root.
 
-; TODO! Allow for "freezing" all open leaves when a terminator is reached. This will require changes to the interval dereferencing procedure, as well as a few other things. Idea is to have different :# symbols (change to symbols ala terminators) to represent the "here" for the different strings. The one matching the terminator that is reached stops changing.
+; TODO! Allow for "freezing" all open leaves when a terminator is reached. Now need to refactor current-end to be a (sorted-map-by #(if (and (end-symbol? %1) (end-symbol? %2)) (apply < (map end-symbol-number [%1 %2])) (< 0 (compare (str %1) (str %2))))). Maybe doesn't have to be a sorted-map... we'll see. Destructure "ends" (this thing) as {:keys [current-end] :as ends}.
 
 (defn ukkonen-construct
   "Constructs a suffix tree to represent text-vec. Uses Ukkonen's algorithm."
@@ -196,7 +208,7 @@
            (recur text-vec tree active-point 1 current-end)
            (let [current-symbol (index-deref text-vec current-end)
                  new-tree (test-and-split text-vec tree active-point current-end current-symbol)
-                 tree-changed (:changed (meta new-tree))]
+                 tree-changed (not (= tree new-tree))]
                 (recur text-vec
                        new-tree
                        {:active-length ((if tree-changed identity inc) active-length)
