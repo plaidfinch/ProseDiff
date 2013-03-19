@@ -120,15 +120,15 @@
          (filter (fn [[v-1 v-2 e-t e-l]]
                      (or no-label-filter
                          (= e-l edge-label)))
-                 (condp = query-form
-                        [0 0 0] (all-edges     graph                            )
-                        [0 0 1] (all-edges     graph                   edge-type)
-                        [0 1 0] (in-edges      graph          vertex-2          )
-                        [0 1 1] (in-edges      graph          vertex-2 edge-type)
-                        [1 0 0] (out-edges     graph vertex-1                   )
-                        [1 0 1] (out-edges     graph vertex-1          edge-type)
-                        [1 1 0] (edges-between graph vertex-1 vertex-2          )
-                        [1 1 1] (edges-between graph vertex-1 vertex-2 edge-type)))))
+                 (case query-form
+                       [0 0 0] (all-edges     graph                            )
+                       [0 0 1] (all-edges     graph                   edge-type)
+                       [0 1 0] (in-edges      graph          vertex-2          )
+                       [0 1 1] (in-edges      graph          vertex-2 edge-type)
+                       [1 0 0] (out-edges     graph vertex-1                   )
+                       [1 0 1] (out-edges     graph vertex-1          edge-type)
+                       [1 1 0] (edges-between graph vertex-1 vertex-2          )
+                       [1 1 1] (edges-between graph vertex-1 vertex-2 edge-type)))))
   ([graph [vertex-1 vertex-2 edge-type edge-label]]
     (edges graph :_ [vertex-1 vertex-2 edge-type edge-label]))
   ([graph]
