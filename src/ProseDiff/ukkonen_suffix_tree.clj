@@ -170,10 +170,19 @@
             (-> tree
                 ; Split edge...
                 (dg/remove-edge ,, old-edge)
-                (dg/edge  ,, [start-node new-node :normal [start-index split-index]])
-                (dg/edge  ,, [new-node   end-node :normal [(inc split-index) end-index]])
+                (dg/edge  ,, [start-node
+                              new-node
+                              :normal
+                              [start-index split-index]])
+                (dg/edge  ,, [new-node
+                              end-node
+                              :normal
+                              [(inc split-index) end-index]])
                 ; Notate new node with its child...
-                (assoc-in ,, [new-node :children (index-deref text-vec (inc split-index))] end-node)
+                (assoc-in ,, [new-node
+                              :children
+                              (index-deref text-vec (inc split-index))]
+                          end-node)
                 ; Actually add the child...
                 (add-child-at ,, text-vec ends
                               {:active-node new-node
@@ -212,8 +221,6 @@
 ; TODO! Go through entire remainder, inserting as needed, and keep track of edge-split inserts during this in a list. Then (reduce (partial dg/edge tree) (map #(concat % [:suffix]) (partition 2 1 list-of-new-nodes))).
 
 ; TODO! Move active-point around tree using proper rules: if root, decrease length; else, move by suffix link at active-node; else, move to root.
-
-; TODO! Allow for "freezing" all open leaves when a terminator is reached. Now need to refactor current-end to be a (sorted-map-by #(if (and (end-symbol? %1) (end-symbol? %2)) (apply < (map end-symbol-number [%1 %2])) (< 0 (compare (str %1) (str %2))))). Maybe doesn't have to be a sorted-map... we'll see. Destructure "ends" (this thing) as {:keys [current-end] :as ends}.
 
 (defn ukkonen-construct
   "Constructs a suffix tree to represent text-vec. Uses Ukkonen's algorithm."
