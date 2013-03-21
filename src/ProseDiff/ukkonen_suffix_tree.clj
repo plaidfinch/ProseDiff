@@ -4,7 +4,7 @@
 ;;  Some helpful utility functions...
 
 (def debug
-  true)
+  false)
 
 ; Wrap in dbg to log.
 (defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
@@ -41,10 +41,10 @@
   "Takes the current end and an interval 2-tuple, and substitutes the current end into the interval wherever an end-symbol is present."
   ([{:keys [current-end] :as ends} [interval-start interval-end]]
    [(if (end-symbol? interval-start)
-        (get ends interval-start current-end)
+        (min (get ends interval-start current-end) current-end)
         interval-start)
     (if (end-symbol? interval-end)
-        (get ends interval-end current-end)
+        (min (get ends interval-end current-end) current-end)
         interval-end)]))
 
 (defn inclusive-to-exclusive-interval
@@ -141,9 +141,12 @@
   "Takes any number of strings and returns an ends map mapping end-symbols to where those ends would be in the terminator-combined text."
   ([& strings]
    (let [end-numbers (drop 1 (reductions #(inc (+ %1 %2)) 0 (map count strings)))]
-        (into {} (map #(vector (end-symbol %2) %1)
-                      end-numbers
-                      (iterate inc 1))))))
+        (into (sorted-map-by #(if (and (end-symbol? %1) (end-symbol? %2))
+                                  (apply < (map end-symbol-number [%1 %2]))
+                                  (> 0 (compare (str %1) (str %2)))))
+              (map #(vector (end-symbol %2) %1)
+                   end-numbers
+                   (iterate inc 0))))))
 
 ;;  The bulk of the algorithm proper...
 
@@ -178,9 +181,18 @@
                                :active-length 0}))
             (-> tree
                 ; Notate what symbol child starts with...
-                (assoc-in ,, [start-node :children (index-deref text-vec current-end)] new-node)
+                (assoc-in ,, [start-node
+                              :children
+                              (index-deref text-vec current-end)]
+                          new-node)
                 ; Create it here...
-                (dg/edge  ,, [start-node new-node :normal [current-end (end-symbol 1)]]))))))
+                (dg/edge  ,, [start-node
+                              new-node
+                              :normal
+                              [current-end
+                               (->> ends
+                                    (drop-while #(< (second %) current-end ,,))
+                                    ffirst)]]))))))
 
 (defn matching-edge
   "If the active point is not on an edge, finds the outgoing edge from the active node which begins with the symbol specified. If the active point is on an edge, returns that edge iff the symbol matches on that edge at the current point. Otherwise, returns nil."
@@ -232,8 +244,7 @@
                       (empty-suffix-tree)
                       (starting-active-point)
                       0
-                      (into {:current-end 1}
-                            (apply find-ends strings)))))
+                      (into (apply find-ends strings) {:current-end 1}))))
 
 ;;  Printing functions...
 
@@ -251,7 +262,7 @@
         (if (= :suffix (dg/edge-type edge))
             " [style=dotted]"
             (let [label (interval-deref text-vec
-                                        ends
+                                        (update-in ends [:current-end] dec)
                                         (dg/edge-label edge))
                   is-active-edge (and (= (dg/edge-end edge) active-edge)
                                       (= (dg/edge-start edge) active-node))]
@@ -267,13 +278,13 @@
    (dot-edge-str text-vec
                  tree
                  (starting-active-point)
-                 {:current-end (count text-vec)}
+                 (into ends {:current-end (inc (count text-vec))})
                  edge)))
 
 (defn tree-to-dot
   "Generates a GraphViz DOT format representation of the tree, with the active point displayed on it. Takes a tree, an active point, and the text."
   ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} {:keys [current-end] :as ends}]
-   (str "digraph SuffixTree {\n"
+   (str "digraph {\n"
         "\tnode [shape=point];\n"
         "\tnode [label=""];\n"
         "\troot [width=0.1];\n"
@@ -286,7 +297,7 @@
                     (dg/edges tree)))
         "}"))
   ([text-vec ends tree]
-   (str "digraph SuffixTree {\n"
+   (str "digraph {\n"
         "\tnode [shape=point];\n"
         "\tnode [label=""];\n"
         "\troot [width=0.1];\n"
@@ -306,3 +317,9 @@
   "Runs the algorithm and directly prints a DOT format tree to the console."
   ([& strings]
    (println (apply make-dot-tree strings))))
+
+(defn debug-dot-tree
+  "Runs the algorithm and directly prints a DOT format tree to the console, along with intermediate debugging information as it is building the tree. Equivalent to running with the var debug set to true."
+  ([& strings]
+   (with-redefs [debug true]
+                (apply print-dot-tree strings))))
