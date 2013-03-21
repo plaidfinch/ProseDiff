@@ -9,6 +9,21 @@
 ; Wrap in dbg to log.
 (defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
 
+(defn take-until-same
+  "Returns the part of a sequence up until it has a consecutive repeated element."
+  ([s] (cons (first s)
+             (map second (take-while #((complement =) (first %) (second %))
+                                     (partition 2 1 s))))))
+
+(defn take-while-unique
+  "Returns the part of a sequence up until it repeats any element (not just a consecutive element like take-until-same does)."
+  ([s] (take-while-unique s #{} []))
+  ([s seen return] (if (and ((complement seen) (first s)) (seq s))
+                       (recur (rest s)
+                              (conj seen (first s))
+                              (conj return (first s)))
+                       (seq return))))
+
 (defn update-many-in
   "Takes a map and any number of vectors of format [[k & ks] f & args] and uses update-in to update all these values in the map."
   ([m & key-function-args-vecs]
@@ -220,29 +235,38 @@
 
 ; TODO! Go through entire remainder, inserting as needed, and keep track of edge-split inserts during this in a list. Then (reduce (partial dg/edge tree) (map #(concat % [:suffix]) (partition 2 1 list-of-new-nodes))).
 
-; TODO! Move active-point around tree using proper rules: if root, decrease length; else, move by suffix link at active-node; else, move to root.
+(defn advance-active-point
+  "Moves the active point along by one step using the rules for the Ukkonen algorithm: if root, decrease active-length by 1; otherwise, move by a suffix link from the active-node; otherwise, move to root."
+  ([text-vec tree tree-changed current-symbol {:keys [active-node active-edge active-length] :as active-point}]
+   (if (not tree-changed)
+       ; If the tree was not changed, increment the active length and set the edge to the appropriate edge.
+       (assoc-in (update-in active-point [:active-length] inc)
+                 [:active-edge]
+                 (matching-edge text-vec tree active-point current-symbol))
+       (if (and (= active-node :root) (> active-length 0))
+           ; If the node is root, decrement the active length if one can.
+           (update-in active-point [:active-length] dec)
+           ; If the node is not root and there is a suffix link going out of the node, follow it. Otherwise, reset to root.
+           (if-let [out-suffix-link (first (dg/edges tree [active-node :_ :suffix]))]
+                   (assoc-in active-point [:active-node] (dg/edge-end out-suffix-link))
+                   (assoc-in active-point [:active-node] :root))))))
 
 (defn ukkonen-construct
   "Constructs a suffix tree to represent text-vec. Uses Ukkonen's algorithm."
   ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} remainder {:keys [current-end] :as ends}]
-   (if debug (do (dbg active-point)
-                 (dbg remainder)
-                 (dbg ends)
+   (if debug (do (dbg active-point) (dbg remainder) (dbg ends)
                  (println (tree-to-dot text-vec tree active-point ends))))
    (if (> current-end (count text-vec))
        (vary-meta tree assoc ::finished true)
-       (if (zero? remainder)
-           (recur text-vec tree active-point 1 ends)
-           (let [current-symbol (index-deref text-vec current-end)
-                 new-tree (test-and-split text-vec tree active-point ends current-symbol)
-                 tree-changed (not (= tree new-tree))]
-                (recur text-vec
-                       new-tree
-                       {:active-length ((if tree-changed identity inc) active-length)
-                        :active-edge (matching-edge text-vec tree active-point current-symbol)
-                        :active-node active-node}
-                       ((if tree-changed dec inc) remainder)
-                       (update-in ends [:current-end] inc)))))))
+       (let [current-symbol (index-deref text-vec current-end)
+             new-tree (test-and-split text-vec tree active-point ends current-symbol)
+             tree-changed (not (= tree new-tree))]
+            (recur text-vec
+                   new-tree
+                   (advance-active-point
+                     text-vec tree tree-changed current-symbol active-point)
+                   (if (zero? remainder) 1 ((if tree-changed dec inc) remainder))
+                   (update-in ends [:current-end] inc))))))
 
 (defn make-suffix-tree
   "Constructs a suffix tree to represent the string(s). Uses Ukkonen's algorithm."
