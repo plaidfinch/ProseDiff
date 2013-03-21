@@ -1,10 +1,15 @@
 (ns prosediff.ukkonen-suffix-tree
     (:require [prosediff.directed-graph :as dg]))
 
-;;  Some helpful utility functions...
-
+; Print additional logging during program run.
 (def debug
   false)
+
+; By default, print a DOT tree including formatting that makes it render nicely. For logging output, this may be disabled for ease of scrolling.
+(def final-dot-formatting
+  true)
+
+;;  Some helpful utility functions...
 
 ; Wrap in dbg to log.
 (defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
@@ -251,13 +256,24 @@
                    (assoc-in active-point [:active-node] (dg/edge-end out-suffix-link))
                    (assoc-in active-point [:active-node] :root))))))
 
+(defn advance-remainder
+  "Moves the remainder along by one step using the rules for the Ukkonen algorithm: if the tree was changed and it's non-zero, decrease by one. If the tree wasn't changed, increase by one."
+  ([tree-changed remainder]
+   (if tree-changed
+       (if (zero? remainder) remainder (dec remainder))
+       (inc remainder))))
+
 (defn ukkonen-construct
   "Constructs a suffix tree to represent text-vec. Uses Ukkonen's algorithm."
   ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} remainder {:keys [current-end] :as ends}]
-   (if debug (do (dbg active-point) (dbg remainder) (dbg ends)
-                 (println (tree-to-dot text-vec tree active-point ends))))
+   (if debug
+       (do (dbg active-point) (dbg remainder) (dbg ends)
+           (with-redefs [final-dot-formatting false]
+                        (println (tree-to-dot text-vec tree active-point ends))
+                        (println))))
    (if (> current-end (count text-vec))
-       (vary-meta tree assoc ::finished true)
+       (do (if debug (println "CONSTRUCTION COMPLETE.\n"))
+           (vary-meta tree assoc ::finished true))
        (let [current-symbol (index-deref text-vec current-end)
              new-tree (test-and-split text-vec tree active-point ends current-symbol)
              tree-changed (not (= tree new-tree))]
@@ -265,7 +281,8 @@
                    new-tree
                    (advance-active-point
                      text-vec tree tree-changed current-symbol active-point)
-                   (if (zero? remainder) 1 ((if tree-changed dec inc) remainder))
+                   (advance-remainder
+                     tree-changed remainder)
                    (update-in ends [:current-end] inc))))))
 
 (defn make-suffix-tree
@@ -316,22 +333,20 @@
   "Generates a GraphViz DOT format representation of the tree, with the active point displayed on it. Takes a tree, an active point, and the text."
   ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} {:keys [current-end] :as ends}]
    (str "digraph {\n"
-        "\tnode [shape=point];\n"
-        "\tnode [label=""];\n"
-        "\troot [width=0.1];\n"
-        "\t" (if (keyword? active-node)
-                 (name active-node)
-                 active-node)
-        " [color=red, width=0.1];\n"
+        (if final-dot-formatting
+            (str "\tnode [shape=point];\n\tnode [label=""];\n\troot [width=0.1];\n"
+                  "\t" (if (keyword? active-node)
+                           (name active-node)
+                           active-node)
+                  " [color=red, width=0.1];\n"))
         (apply str
                (map (partial dot-edge-str text-vec tree active-point ends)
                     (dg/edges tree)))
         "}"))
   ([text-vec ends tree]
    (str "digraph {\n"
-        "\tnode [shape=point];\n"
-        "\tnode [label=""];\n"
-        "\troot [width=0.1];\n"
+        (if final-dot-formatting
+            (str "\tnode [shape=point];\n\tnode [label=""];\n\troot [width=0.1];\n"))
         (apply str
                (map (partial dot-edge-str tree text-vec ends)
                     (dg/edges tree)))
