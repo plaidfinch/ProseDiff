@@ -21,13 +21,16 @@
                                      (partition 2 1 s))))))
 
 (defn take-while-unique
-  "Returns the part of a sequence up until it repeats any element (not just a consecutive element like take-until-same does)."
-  ([s] (take-while-unique s #{} []))
-  ([s seen return] (if (and ((complement seen) (first s)) (seq s))
-                       (recur (rest s)
-                              (conj seen (first s))
-                              (conj return (first s)))
-                       (seq return))))
+  "Returns a lazy subsequence of a sequence up until it repeats any element (not just a consecutive element like take-until-same does)."
+  ([coll] (take-while-unique coll #{}))
+  ([coll seen]
+   (lazy-seq
+     (when ((complement seen) (first coll))
+           (when-let [coll (seq coll)]
+                     (cons (first coll)
+                           (take-while-unique (rest coll)
+                                              (conj seen (first coll)))))))))
+
 
 (defn update-many-in
   "Takes a map and any number of vectors of format [[k & ks] f & args] and uses update-in to update all these values in the map."
