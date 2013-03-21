@@ -16,20 +16,23 @@
 
 (defn take-until-same
   "Returns the part of a sequence up until it has a consecutive repeated element."
-  ([s] (cons (first s)
-             (map second (take-while #((complement =) (first %) (second %))
-                                     (partition 2 1 s))))))
+  ([s]
+   (cons (first s)
+         (map second (take-while #((complement =) (first %) (second %))
+                                 (partition 2 1 s))))))
 
 (defn take-while-unique
   "Returns a lazy subsequence of a sequence up until it repeats any element (not just a consecutive element like take-until-same does)."
-  ([coll] (take-while-unique coll #{}))
+  ([coll]
+   (take-while-unique coll #{}))
   ([coll seen]
    (lazy-seq
      (when ((complement seen) (first coll))
            (when-let [coll (seq coll)]
                      (cons (first coll)
-                           (take-while-unique (rest coll)
-                                              (conj seen (first coll)))))))))
+                           (take-while-unique
+                             (rest coll)
+                             (conj seen (first coll)))))))))
 
 
 (defn update-many-in
