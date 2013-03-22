@@ -1,6 +1,9 @@
 (ns prosediff.ukkonen-suffix-tree
     (:require [prosediff.directed-graph :as dg]))
 
+(declare
+  matching-edge tree-to-dot)
+
 ; Print additional logging during program run.
 (def debug
   false)
@@ -34,11 +37,15 @@
                              (rest coll)
                              (conj seen (first coll)))))))))
 
-
 (defn update-many-in
   "Takes a map and any number of vectors of format [[k & ks] f & args] and uses update-in to update all these values in the map."
   ([m & key-function-args-vecs]
    (reduce #(apply update-in %1 %2) m key-function-args-vecs)))
+
+(defn assoc-many-in
+  "Takes a map and any number of vectors of format [[k & ks] f & args] and uses assoc-in to assoc all these values in the map."
+  ([m & key-value-vecs]
+   (reduce #(apply assoc-in %1 %2) m key-value-vecs)))
 
 (defn only-item
   "Returns first of a list, but if the list is not 1 long, fails an assertion."
@@ -60,66 +67,6 @@
              (clip 0 (count v) (max start end))))
   ([v start]
    (safe-subvec v start (count v))))
-
-;;  Dereferencing functions for various pointers into the text...
-
-(defn reify-interval
-  "Takes the current end and an interval 2-tuple, and substitutes the current end into the interval wherever an end-symbol is present."
-  ([{:keys [current-end] :as ends} [interval-start interval-end]]
-   [(if (end-symbol? interval-start)
-        (min (get ends interval-start current-end) current-end)
-        interval-start)
-    (if (end-symbol? interval-end)
-        (min (get ends interval-end current-end) current-end)
-        interval-end)]))
-
-(defn inclusive-to-exclusive-interval
-  "Converts inclusive interval specifications (used internally to refer to intervals of text) into exclusive specifications, like those used by subvec."
-  ([[start end]]
-   [(dec start) end]))
-
-(defn interval-deref
-  "Takes the source text as a vector, the current ending index, and an interval 2-tuple where the keyword :# is a reference to whatever the current value of current-end is. Returns the corresponding chunk of text, as a vector of characters."
-  ([text-vec {:keys [current-end] :as ends} interval]
-   (apply safe-subvec
-          text-vec
-          (inclusive-to-exclusive-interval
-            (reify-interval ends interval))))
-  ([text-vec interval]
-   (interval-deref text-vec (count text-vec) interval)))
-
-(defn index-deref
-  "Returns the symbol at an index in the text."
-  ([text-vec i]
-   (nth text-vec (dec i))))
-
-(defn active-point-deref
-  "Returns the symbol at the active point."
-  ([text-vec tree {:keys [active-node active-edge active-length] :as active-point}]
-   (if (and active-edge (> active-length 0))
-       (nth text-vec
-            (+ (dec active-length)
-               (only-item
-                 (map (comp first dg/edge-label)
-                      (dg/edges tree [active-node active-edge :normal]))))))))
-
-(defn edge-deref
-  "Returns the subvector of the text to which an edge corresponds."
-  ([text-vec {:keys [current-end] :as ends} edge]
-   (if (not (nil? edge))
-       (->> edge dg/edge-label (interval-deref text-vec ends ,,)))))
-
-;;  Starting values for suffix tree and active point...
-
-(defn starting-active-point
-  "Returns the starting value of the active point."
-  ([] {:active-node :root
-       :active-edge nil
-       :active-length 0}))
-
-(defn empty-suffix-tree
-  "Returns an empty suffix tree."
-  ([] (dg/make-graph [] [[:root]])))
 
 ;;  Create and manipulate terminating symbols and end symbols...
 
@@ -174,6 +121,80 @@
                    end-numbers
                    (iterate inc 0))))))
 
+;;  Dereferencing functions for various pointers into the text...
+
+(defn reify-interval
+  "Takes the current end and an interval 2-tuple, and substitutes the current end into the interval wherever an end-symbol is present."
+  ([{:keys [current-end] :as ends} [interval-start interval-end]]
+   [(if (end-symbol? interval-start)
+        (min (get ends interval-start current-end) current-end)
+        interval-start)
+    (if (end-symbol? interval-end)
+        (min (get ends interval-end current-end) current-end)
+        interval-end)]))
+
+(defn inclusive-to-exclusive-interval
+  "Converts inclusive interval specifications (used internally to refer to intervals of text) into exclusive specifications, like those used by subvec."
+  ([[start end]]
+   [(dec start) end]))
+
+(defn interval-deref
+  "Takes the source text as a vector, the current ending index, and an interval 2-tuple where the keyword :# is a reference to whatever the current value of current-end is. Returns the corresponding chunk of text, as a vector of characters."
+  ([text-vec {:keys [current-end] :as ends} interval]
+   (apply safe-subvec
+          text-vec
+          (inclusive-to-exclusive-interval
+            (reify-interval ends interval))))
+  ([text-vec interval]
+   (interval-deref text-vec (count text-vec) interval)))
+
+(defn index-deref
+  "Returns the symbol at an index in the text."
+  ([text-vec i]
+   (nth text-vec (dec i))))
+
+(defn active-point-deref
+  "Returns the symbol at the active point."
+  ([text-vec tree {:keys [active-node active-edge active-length] :as active-point}]
+   (if (and active-edge
+            (matching-edge tree active-node active-edge))
+       (index-deref
+         text-vec
+         (+ active-length
+            ((comp first dg/edge-label)
+             (only-item
+               (dg/edges
+                 tree [active-node
+                       (matching-edge tree active-node active-edge)
+                       :normal]))))))))
+
+(defn edge-deref
+  "Returns the subvector of the text to which an edge corresponds."
+  ([text-vec {:keys [current-end] :as ends} edge]
+   (if (not (nil? edge))
+       (->> edge dg/edge-label (interval-deref text-vec ends ,,)))))
+
+(defn edge-length
+  "Returns the length of an edge, given the current ends."
+  ([ends edge]
+   (apply #(- (inc %2) %1) (reify-interval ends (dg/edge-label edge)))))
+
+;;  Starting values for suffix tree and active point...
+
+(defn starting-active-point
+  "Returns the starting value of the active point."
+  ([] {:active-node :root
+       :active-edge nil
+       :active-length 0}))
+
+(defn starting-remainder
+  "Returns the starting value of the remainder."
+  ([] 1))
+
+(defn starting-suffix-tree
+  "Returns an empty suffix tree."
+  ([] (dg/make-graph [] [[:root]])))
+
 ;;  The bulk of the algorithm proper...
 
 (defn new-node-name
@@ -183,9 +204,13 @@
 (defn add-child-at
   "Adds a child of the tree at the current active point and labeled to start at the current end. If the active point is inside an edge, splits the edge and creates a new node in order to insert the child."
   ([tree text-vec {:keys [current-end] :as ends} {:keys [active-node active-edge active-length] :as active-point}]
+   (assert (= clojure.lang.PersistentTreeMap (type ends)))
    (let [new-node (new-node-name tree)
          old-edge (if active-edge
-                      (only-item (dg/edges tree [active-node active-edge :normal])))
+                      (only-item
+                        (dg/edges tree [active-node
+                                        (matching-edge tree active-node active-edge)
+                                        :normal])))
          start-node  active-node
          end-node    (dg/edge-end old-edge)
          start-index (first (dg/edge-label old-edge))
@@ -196,18 +221,11 @@
             (-> tree
                 ; Split edge...
                 (dg/remove-edge ,, old-edge)
-                (dg/edge  ,, [start-node
-                              new-node
-                              :normal
-                              [start-index split-index]])
-                (dg/edge  ,, [new-node
-                              end-node
-                              :normal
-                              [(inc split-index) end-index]])
+                (dg/edge ,, [start-node new-node :normal [start-index split-index]])
+                (dg/edge ,, [new-node end-node :normal [(inc split-index) end-index]])
                 ; Notate new node with its child...
-                (assoc-in ,, [new-node
-                              :children
-                              (index-deref text-vec (inc split-index))]
+                (assoc-in ,,
+                          [new-node :children (index-deref text-vec (inc split-index))]
                           end-node)
                 ; Actually add the child...
                 (add-child-at ,, text-vec ends
@@ -216,58 +234,65 @@
                                :active-length 0}))
             (-> tree
                 ; Notate what symbol child starts with...
-                (assoc-in ,, [start-node
-                              :children
-                              (index-deref text-vec current-end)]
+                (assoc-in ,,
+                          [start-node :children (index-deref text-vec current-end)]
                           new-node)
                 ; Create it here...
-                (dg/edge  ,, [start-node
-                              new-node
-                              :normal
-                              [current-end
-                               (->> ends
-                                    (drop-while #(< (second %) current-end ,,))
-                                    ffirst)]]))))))
+                (dg/edge ,,
+                         [start-node new-node :normal 
+                          [current-end
+                           (->> ends
+                                (drop-while #(< (second %) current-end ,,))
+                                ffirst)]]))))))
 
 (defn matching-edge
   "If the active point is not on an edge, finds the outgoing edge from the active node which begins with the symbol specified. If the active point is on an edge, returns that edge iff the symbol matches on that edge at the current point. Otherwise, returns nil."
   ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} s]
-   (if (> active-length 0)
-       (if (= s (active-point-deref text-vec tree active-point))
-           active-edge)
-       (get-in tree [active-node :children s]))))
+   (if (or (= active-length 0)
+           (= s (active-point-deref text-vec tree active-point)))
+       (get-in tree [active-node :children s])))
+  ([tree active-node s]
+   (get-in tree [active-node :children s])))
 
 (defn test-and-split
   "Adds a child node at the active point if this is necessary. This is essentially equivalent to the test-and-split procedure from the original Ukkonen paper."
-  ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} {:keys [current-end] :as ends} current-symbol] 
-   (if (matching-edge text-vec tree active-point current-symbol)
-       tree
-       (add-child-at tree text-vec ends active-point))))
+  ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} {:keys [current-end] :as ends}]
+   (let [current-symbol (index-deref text-vec current-end)]
+        (if (matching-edge text-vec tree active-point current-symbol)
+            tree
+            (add-child-at tree text-vec ends active-point)))))
 
 ; TODO! Go through entire remainder, inserting as needed, and keep track of edge-split inserts during this in a list. Then (reduce (partial dg/edge tree) (map #(concat % [:suffix]) (partition 2 1 list-of-new-nodes))).
 
 (defn advance-active-point
   "Moves the active point along by one step using the rules for the Ukkonen algorithm: if root, decrease active-length by 1; otherwise, move by a suffix link from the active-node; otherwise, move to root."
-  ([text-vec tree tree-changed current-symbol {:keys [active-node active-edge active-length] :as active-point}]
-   (if (not tree-changed)
-       ; If the tree was not changed, increment the active length and set the edge to the appropriate edge.
-       (assoc-in (update-in active-point [:active-length] inc)
-                 [:active-edge]
-                 (matching-edge text-vec tree active-point current-symbol))
-       (if (and (= active-node :root) (> active-length 0))
-           ; If the node is root, decrement the active length if one can.
-           (update-in active-point [:active-length] dec)
-           ; If the node is not root and there is a suffix link going out of the node, follow it. Otherwise, reset to root.
-           (if-let [out-suffix-link (first (dg/edges tree [active-node :_ :suffix]))]
-                   (assoc-in active-point [:active-node] (dg/edge-end out-suffix-link))
-                   (assoc-in active-point [:active-node] :root))))))
+  ([text-vec tree tree-changed {:keys [current-end] :as ends} {:keys [active-node active-edge active-length] :as active-point}]
+   (let [current-symbol (index-deref text-vec current-end)
+         new-active-edge (index-deref text-vec (- current-end active-length))]
+        (if (not tree-changed)
+            (assoc (update-in active-point [:active-length] inc)
+                   :active-edge new-active-edge)
+            (if (= active-node :root)
+                (if (> active-length 0)
+                    (update-in active-point [:active-length] dec)
+                    active-point)
+                (if-let [out-suffix-link
+                         (first (dg/edges tree [active-node :_ :suffix]))]
+                        (assoc active-point :active-node
+                               (dg/edge-end out-suffix-link))
+                        (assoc active-point :active-node :root)))))))
 
 (defn advance-remainder
   "Moves the remainder along by one step using the rules for the Ukkonen algorithm: if the tree was changed and it's non-zero, decrease by one. If the tree wasn't changed, increase by one."
   ([tree-changed remainder]
-   (if tree-changed
-       (if (zero? remainder) remainder (dec remainder))
-       (inc remainder))))
+   (max 1 (if tree-changed
+              (dec remainder)
+              (inc remainder)))))
+
+(defn canonize
+  "Makes the active point canonical. Same as in original paper. NOT YET IMPLEMENTED!!!"
+  ([text-vec tree remainder {:keys [current-end] :as ends} {:keys [active-node active-edge active-length] :as active-point}]
+   active-point))
 
 (defn ukkonen-construct
   "Constructs a suffix tree to represent text-vec. Uses Ukkonen's algorithm."
@@ -278,15 +303,18 @@
                         (println (tree-to-dot text-vec tree active-point ends))
                         (println))))
    (if (> current-end (count text-vec))
-       (do (if debug (println "CONSTRUCTION COMPLETE.\n"))
+       (do (if debug (do (println "CONSTRUCTION COMPLETE.\n")
+                         (dbg active-point)
+                         (dbg remainder)
+                         (dbg ends)))
            (vary-meta tree assoc ::finished true))
-       (let [current-symbol (index-deref text-vec current-end)
-             new-tree (test-and-split text-vec tree active-point ends current-symbol)
+       (let [new-tree (test-and-split text-vec tree active-point ends)
+             new-active-point (canonize text-vec new-tree remainder ends active-point)
              tree-changed (not (= tree new-tree))]
             (recur text-vec
                    new-tree
                    (advance-active-point
-                     text-vec tree tree-changed current-symbol active-point)
+                     text-vec new-tree tree-changed ends new-active-point)
                    (advance-remainder
                      tree-changed remainder)
                    (update-in ends [:current-end] inc))))))
@@ -295,9 +323,9 @@
   "Constructs a suffix tree to represent the string(s). Uses Ukkonen's algorithm."
   ([& strings]
    (ukkonen-construct (apply combine-with-terminators strings)
-                      (empty-suffix-tree)
+                      (starting-suffix-tree)
                       (starting-active-point)
-                      0
+                      (starting-remainder)
                       (into (apply find-ends strings) {:current-end 1}))))
 
 ;;  Printing functions...
@@ -318,7 +346,8 @@
             (let [label (interval-deref text-vec
                                         (update-in ends [:current-end] dec)
                                         (dg/edge-label edge))
-                  is-active-edge (and (= (dg/edge-end edge) active-edge)
+                  is-active-edge (and (= (dg/edge-end edge)
+                                         (matching-edge tree active-node active-edge))
                                       (= (dg/edge-start edge) active-node))]
                  (str " [label=\""
                          (apply str (safe-subvec label 0 active-length))
