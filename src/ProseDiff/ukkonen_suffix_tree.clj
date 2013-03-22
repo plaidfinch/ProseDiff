@@ -232,7 +232,8 @@
          end-index  (second (dg/edge-label old-edge))
          split-index (if-let [s-i start-index]
                              (+ start-index -1 active-length))]
-        (if (active-point-deref text-vec tree active-point)
+        (if (and (> active-length 0)
+                 (active-point-deref text-vec tree active-point))
             (-> tree
                 ; Split edge...
                 (dg/remove-edge ,, old-edge)
@@ -386,7 +387,7 @@
   ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} {:keys [current-end] :as ends}]
    (str "digraph {\n"
         (if final-dot-formatting
-            (str "\tnode [shape=point];\n\tnode [label=""];\n\troot [width=0.1];\n"
+            (str "\tnode [shape=point];\n\tnode [label=""];\n\troot [width=0.2];\n"
                   "\t" (if (keyword? active-node)
                            (name active-node)
                            active-node)
@@ -398,7 +399,7 @@
   ([text-vec ends tree]
    (str "digraph {\n"
         (if final-dot-formatting
-            (str "\tnode [shape=point];\n\tnode [label=""];\n\troot [width=0.1];\n"))
+            (str "\tnode [shape=point];\n\tnode [label=""];\n\troot [width=0.2];\n"))
         (apply str
                (map (partial dot-edge-str tree text-vec ends)
                     (dg/edges tree)))
