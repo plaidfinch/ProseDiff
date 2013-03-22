@@ -1,5 +1,8 @@
 (ns prosediff.directed-graph)
 
+; Wrap in dbg to log.
+(defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
+
 (defn vertex
   "Returns graph with a vertex added to it. If optional data is given, this object is attached to the vertex; otherwise, the vertex's data is nil. If the vertex already exists, overwrites data with new given data, unless no data is given, in which case no change is made."
   ([graph vertex-name data]
@@ -113,10 +116,12 @@
 (defn edges
   "Returns a list of edges in the graph matching the pattern specified, thus combining into a succint interface all the explicit, specific types of edge accessor functions. Takes an (up to) 4-vector of form [<from> <to> <type> <label>] with the :_ keyword (or the vector being too short to have a particular item) representing a wildcard. If the :_ keyword conflicts with the graph, another arbitrary wildcard value may be specified.
   This is a much more efficient way to retrieve edges maching various specifications than filtering all the edges, as it takes advantage of the graph's structure to dramatically reduce the necessary work."
-  ([graph wildcard [vertex-1 vertex-2 edge-type edge-label]]
-    (let [query-form [(if (or (= vertex-1  wildcard) (= vertex-1  nil)) 0 1)
-                      (if (or (= vertex-2  wildcard) (= vertex-2  nil)) 0 1)
-                      (if (or (= edge-type wildcard) (= edge-type nil)) 0 1)]
+  ([graph wildcard query]
+    (let [[vertex-1 vertex-2 edge-type edge-label] query
+          arg-count (count query)
+          query-form [(if (or (= vertex-1  wildcard) (< arg-count 1)) 0 1)
+                      (if (or (= vertex-2  wildcard) (< arg-count 2)) 0 1)
+                      (if (or (= edge-type wildcard) (< arg-count 3)) 0 1)]
           no-label-filter (if (or (= edge-label wildcard) (= edge-label nil)) true false)]
          (filter (fn [[v-1 v-2 e-t e-l]]
                      (or no-label-filter
@@ -130,8 +135,8 @@
                        [1 0 1] (out-edges     graph vertex-1          edge-type)
                        [1 1 0] (edges-between graph vertex-1 vertex-2          )
                        [1 1 1] (edges-between graph vertex-1 vertex-2 edge-type)))))
-  ([graph [vertex-1 vertex-2 edge-type edge-label]]
-    (edges graph :_ [vertex-1 vertex-2 edge-type edge-label]))
+  ([graph query]
+    (edges graph :_ query))
   ([graph]
     (edges graph [])))
 
