@@ -37,6 +37,21 @@
                              (rest coll)
                              (conj seen (first coll)))))))))
 
+; This one is from clojure.contrib
+(defn dissoc-in
+  "Dissociates an entry from a nested associative structure returning a new
+  nested structure. keys is a sequence of keys. Any empty maps that result
+  will not be present in the new structure."
+  [m [k & ks :as keys]]
+  (if ks
+    (if-let [nextmap (get m k)]
+      (let [newmap (dissoc-in nextmap ks)]
+        (if (seq newmap)
+          (assoc m k newmap)
+          (dissoc m k)))
+      m)
+    (dissoc m k)))
+
 (defn update-many-in
   "Takes a map and any number of vectors of format [[k & ks] f & args] and uses update-in to update all these values in the map."
   ([m & key-function-args-vecs]
@@ -227,6 +242,8 @@
                 (assoc-in ,,
                           [new-node :children (index-deref text-vec (inc split-index))]
                           end-node)
+                ; Notate the old node with its new child...
+                (assoc-in ,, [start-node :children active-edge] new-node)
                 ; Actually add the child...
                 (add-child-at ,, text-vec ends
                               {:active-node new-node
