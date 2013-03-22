@@ -96,18 +96,19 @@
            (for [v (keys (all-vertices graph))]
                 (out-edges graph v edge-type)))))
 
-(defn- edges-between
+(defn edges-between
   "Returns a list of edges between two vertices in the format [<from> <to> <type> <label>]. If given an edge-type, returns only edges of that type (which is to say, a singleton list, as there can only be one edge of a type between two vertices)."
   ([graph vertex-1 vertex-2 edge-type]
-    (list [vertex-1
-           vertex-2
-           edge-type
-           (get-in graph
-                   [vertex-1 :out edge-type vertex-2])]))
+   (if (and (contains? (set (keys (get-in graph [vertex-1 :out edge-type]))) vertex-2)
+            (contains? (set (keys (get-in graph [vertex-2 :in edge-type]))) vertex-1))
+       (list [vertex-1
+              vertex-2
+              edge-type
+              (get (get-in graph [vertex-1 :out edge-type]) vertex-2)])))
   ([graph vertex-1 vertex-2]
-    (apply concat
-           (for [edge-type (out-edge-types graph vertex-1)]
-                (edges-between graph vertex-1 vertex-2 edge-type)))))
+   (apply concat
+          (for [edge-type (out-edge-types graph vertex-1)]
+               (edges-between graph vertex-1 vertex-2 edge-type)))))
 
 (defn edges
   "Returns a list of edges in the graph matching the pattern specified, thus combining into a succint interface all the explicit, specific types of edge accessor functions. Takes an (up to) 4-vector of form [<from> <to> <type> <label>] with the :_ keyword (or the vector being too short to have a particular item) representing a wildcard. If the :_ keyword conflicts with the graph, another arbitrary wildcard value may be specified.
