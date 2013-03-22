@@ -99,7 +99,7 @@
            (for [v (keys (all-vertices graph))]
                 (out-edges graph v edge-type)))))
 
-(defn edges-between
+(defn- edges-between
   "Returns a list of edges between two vertices in the format [<from> <to> <type> <label>]. If given an edge-type, returns only edges of that type (which is to say, a singleton list, as there can only be one edge of a type between two vertices)."
   ([graph vertex-1 vertex-2 edge-type]
    (if (and (contains? (set (keys (get-in graph [vertex-1 :out edge-type]))) vertex-2)
