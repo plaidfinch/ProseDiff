@@ -1,5 +1,6 @@
 (ns prosediff.ukkonen-suffix-tree
-    (:require [prosediff.directed-graph :as dg]))
+    (:require [prosediff.directed-graph :as dg]
+              [clojure.java.shell :as shell]))
 
 (declare
   matching-edge tree-to-dot)
@@ -125,6 +126,7 @@
   "Returns the number of an end-symbol given."
   ([s] (if (end-symbol? s) (-> s meta ::number))))
 
+; TODO: Fix sorting function so that it always sorts keywords after symbols, rather than relying on alphabetic order (: coming before #) to do that.
 (defn find-ends
   "Takes any number of strings and returns an ends map mapping end-symbols to where those ends would be in the terminator-combined text."
   ([& strings]
@@ -387,7 +389,7 @@
   ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} {:keys [current-end] :as ends}]
    (str "digraph {\n"
         (if final-dot-formatting
-            (str "\tnode [shape=point];\n\tnode [label=""];\n\troot [width=0.2];\n"
+            (str "\tnode [shape=point];\n\tnode [label=""];\n\troot [width=0.1];\n"
                   "\t" (if (keyword? active-node)
                            (name active-node)
                            active-node)
@@ -399,7 +401,7 @@
   ([text-vec ends tree]
    (str "digraph {\n"
         (if final-dot-formatting
-            (str "\tnode [shape=point];\n\tnode [label=""];\n\troot [width=0.2];\n"))
+            (str "\tnode [shape=point];\n\tnode [label=""];\n\troot [width=0.1];\n"))
         (apply str
                (map (partial dot-edge-str tree text-vec ends)
                     (dg/edges tree)))
@@ -416,6 +418,13 @@
   "Runs the algorithm and directly prints a DOT format tree to the console."
   ([& strings]
    (println (apply make-dot-tree strings))))
+
+(defn view-dot-tree
+  "Runs the algorithm and opens a PDF window viewing the graph. Only works on Mac OS X; for debugging purposes only."
+  ([& strings]
+   (do (shell/sh "dot" "-Tpdf" "-opreview.pdf" :in (apply make-dot-tree strings))
+       (shell/sh "open" "preview.pdf")
+       nil)))
 
 (defn debug-dot-tree
   "Runs the algorithm and directly prints a DOT format tree to the console, along with intermediate debugging information as it is building the tree. Equivalent to running with the var debug set to true."
