@@ -6,3 +6,6 @@
 /.lein-failures
 /checkouts
 /.lein-deps-sum
+/.lein-cljsbuild-compiler-0
+/.lein-cljsbuild-repl
+/.crossover-cljs

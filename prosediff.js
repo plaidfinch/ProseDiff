@@ -20805,237 +20805,127 @@ cljs.core.UUID.prototype.toString = function() {
   return cljs.core.pr_str.call(null, this$)
 };
 cljs.core.UUID;
-goog.provide("clojure.string");
+goog.provide("prosediff.directed_graph");
 goog.require("cljs.core");
-goog.require("goog.string.StringBuffer");
-goog.require("goog.string");
-clojure.string.seq_reverse = function seq_reverse(coll) {
-  return cljs.core.reduce.call(null, cljs.core.conj, cljs.core.List.EMPTY, coll)
-};
-clojure.string.reverse = function reverse(s) {
-  return s.split("").reverse().join("")
-};
-clojure.string.replace = function replace(s, match, replacement) {
-  if(cljs.core.string_QMARK_.call(null, match)) {
-    return s.replace(new RegExp(goog.string.regExpEscape(match), "g"), replacement)
-  }else {
-    if(cljs.core.truth_(match.hasOwnProperty("source"))) {
-      return s.replace(new RegExp(match.source, "g"), replacement)
+prosediff.directed_graph.vertex = function() {
+  var vertex = null;
+  var vertex__2 = function(graph, vertex_name) {
+    if(cljs.core.truth_(graph.call(null, vertex_name))) {
+      return graph
     }else {
-      if("\ufdd0'else") {
-        throw[cljs.core.str("Invalid match arg: "), cljs.core.str(match)].join("");
-      }else {
-        return null
-      }
+      return cljs.core.assoc.call(null, graph, vertex_name, cljs.core.ObjMap.fromObject(["\ufdd0'out", "\ufdd0'in"], {"\ufdd0'out":cljs.core.ObjMap.EMPTY, "\ufdd0'in":cljs.core.ObjMap.EMPTY}))
     }
-  }
-};
-clojure.string.replace_first = function replace_first(s, match, replacement) {
-  return s.replace(match, replacement)
-};
-clojure.string.join = function() {
-  var join = null;
-  var join__1 = function(coll) {
-    return cljs.core.apply.call(null, cljs.core.str, coll)
   };
-  var join__2 = function(separator, coll) {
-    return cljs.core.apply.call(null, cljs.core.str, cljs.core.interpose.call(null, separator, coll))
-  };
-  join = function(separator, coll) {
-    switch(arguments.length) {
-      case 1:
-        return join__1.call(this, separator);
-      case 2:
-        return join__2.call(this, separator, coll)
-    }
-    throw new Error("Invalid arity: " + arguments.length);
-  };
-  join.cljs$lang$arity$1 = join__1;
-  join.cljs$lang$arity$2 = join__2;
-  return join
-}();
-clojure.string.upper_case = function upper_case(s) {
-  return s.toUpperCase()
-};
-clojure.string.lower_case = function lower_case(s) {
-  return s.toLowerCase()
-};
-clojure.string.capitalize = function capitalize(s) {
-  if(cljs.core.count.call(null, s) < 2) {
-    return clojure.string.upper_case.call(null, s)
-  }else {
-    return[cljs.core.str(clojure.string.upper_case.call(null, cljs.core.subs.call(null, s, 0, 1))), cljs.core.str(clojure.string.lower_case.call(null, cljs.core.subs.call(null, s, 1)))].join("")
-  }
-};
-clojure.string.split = function() {
-  var split = null;
-  var split__2 = function(s, re) {
-    return cljs.core.vec.call(null, [cljs.core.str(s)].join("").split(re))
-  };
-  var split__3 = function(s, re, limit) {
-    if(limit < 1) {
-      return cljs.core.vec.call(null, [cljs.core.str(s)].join("").split(re))
+  var vertex__3 = function(graph, vertex_name, data) {
+    if(cljs.core.truth_(graph.call(null, vertex_name))) {
+      return cljs.core.assoc_in.call(null, graph, cljs.core.PersistentVector.fromArray([vertex_name, "\ufdd0'data"], true), data)
     }else {
-      var s__$1 = s;
-      var limit__$1 = limit;
-      var parts = cljs.core.PersistentVector.EMPTY;
-      while(true) {
-        if(cljs.core._EQ_.call(null, limit__$1, 1)) {
-          return cljs.core.conj.call(null, parts, s__$1)
-        }else {
-          var temp__3971__auto__ = cljs.core.re_find.call(null, re, s__$1);
-          if(cljs.core.truth_(temp__3971__auto__)) {
-            var m = temp__3971__auto__;
-            var index = s__$1.indexOf(m);
-            var G__2894 = s__$1.substring(index + cljs.core.count.call(null, m));
-            var G__2895 = limit__$1 - 1;
-            var G__2896 = cljs.core.conj.call(null, parts, s__$1.substring(0, index));
-            s__$1 = G__2894;
-            limit__$1 = G__2895;
-            parts = G__2896;
-            continue
-          }else {
-            return cljs.core.conj.call(null, parts, s__$1)
-          }
-        }
-        break
-      }
+      return cljs.core.assoc.call(null, graph, vertex_name, cljs.core.ObjMap.fromObject(["\ufdd0'out", "\ufdd0'in", "\ufdd0'data"], {"\ufdd0'out":cljs.core.ObjMap.EMPTY, "\ufdd0'in":cljs.core.ObjMap.EMPTY, "\ufdd0'data":data}))
     }
   };
-  split = function(s, re, limit) {
+  vertex = function(graph, vertex_name, data) {
     switch(arguments.length) {
       case 2:
-        return split__2.call(this, s, re);
+        return vertex__2.call(this, graph, vertex_name);
       case 3:
-        return split__3.call(this, s, re, limit)
+        return vertex__3.call(this, graph, vertex_name, data)
     }
     throw new Error("Invalid arity: " + arguments.length);
   };
-  split.cljs$lang$arity$2 = split__2;
-  split.cljs$lang$arity$3 = split__3;
-  return split
+  vertex.cljs$lang$arity$2 = vertex__2;
+  vertex.cljs$lang$arity$3 = vertex__3;
+  return vertex
 }();
-clojure.string.split_lines = function split_lines(s) {
-  return clojure.string.split.call(null, s, /\n|\r\n/)
-};
-clojure.string.trim = function trim(s) {
-  return goog.string.trim(s)
-};
-clojure.string.triml = function triml(s) {
-  return goog.string.trimLeft(s)
-};
-clojure.string.trimr = function trimr(s) {
-  return goog.string.trimRight(s)
-};
-clojure.string.trim_newline = function trim_newline(s) {
-  var index = s.length;
-  while(true) {
-    if(index === 0) {
-      return""
-    }else {
-      var ch = cljs.core._lookup.call(null, s, index - 1, null);
-      if(function() {
-        var or__3824__auto__ = cljs.core._EQ_.call(null, ch, "\n");
-        if(or__3824__auto__) {
-          return or__3824__auto__
-        }else {
-          return cljs.core._EQ_.call(null, ch, "\r")
-        }
-      }()) {
-        var G__2897 = index - 1;
-        index = G__2897;
-        continue
-      }else {
-        return s.substring(0, index)
-      }
-    }
-    break
-  }
-};
-clojure.string.blank_QMARK_ = function blank_QMARK_(s) {
-  return goog.string.isEmptySafe(s)
-};
-clojure.string.escape = function escape(s, cmap) {
-  var buffer = new goog.string.StringBuffer;
-  var length = s.length;
-  var index = 0;
-  while(true) {
-    if(cljs.core._EQ_.call(null, length, index)) {
-      return buffer.toString()
-    }else {
-      var ch = s.charAt(index);
-      var temp__3971__auto__ = cljs.core._lookup.call(null, cmap, ch, null);
-      if(cljs.core.truth_(temp__3971__auto__)) {
-        var replacement = temp__3971__auto__;
-        buffer.append([cljs.core.str(replacement)].join(""))
-      }else {
-        buffer.append(ch)
-      }
-      var G__2898 = index + 1;
-      index = G__2898;
-      continue
-    }
-    break
-  }
-};
-goog.provide("prosediff.core");
-goog.require("cljs.core");
-goog.require("clojure.string");
-prosediff.core.word_chars = cljs.core.PersistentHashSet.fromArray(["A", "a", "B", "b", "C", "c", "D", "d", "E", "e", "F", "f", "'", "G", "g", "H", "h", "I", "i", "J", "j", "K", "k", "L", "l", "-", "M", "m", "N", "n", "O", "o", "0", "P", "p", "1", "Q", "q", "2", "R", "r", "3", "S", "s", "4", "T", "t", "5", "U", "u", "6", "V", "v", "7", "W", "w", "8", "X", "x", "9", "Y", "y", "Z", "z"]);
-prosediff.core.log = function log(item) {
-  return console.log(cljs.core.pr_str.call(null, item))
-};
-prosediff.core.split_to_words = function() {
-  var split_to_words__delegate = function(string, p__9274) {
-    var map__9276 = p__9274;
-    var map__9276__$1 = cljs.core.seq_QMARK_.call(null, map__9276) ? cljs.core.apply.call(null, cljs.core.hash_map, map__9276) : map__9276;
-    var strip_spaces = cljs.core._lookup.call(null, map__9276__$1, "\ufdd0'strip-spaces", true);
-    return cljs.core.remove.call(null, function(p1__9272_SHARP_) {
-      var and__3822__auto__ = strip_spaces;
-      if(cljs.core.truth_(and__3822__auto__)) {
-        return cljs.core._EQ_.call(null, p1__9272_SHARP_, " ")
-      }else {
-        return and__3822__auto__
-      }
-    }, cljs.core.map.call(null, cljs.core.partial.call(null, cljs.core.apply, cljs.core.str), cljs.core.partition_by.call(null, function(p1__9273_SHARP_) {
-      return cljs.core.complement.call(null, cljs.core.contains_QMARK_).call(null, prosediff.core.word_chars, p1__9273_SHARP_)
-    }, string)))
+prosediff.directed_graph.edge = function() {
+  var edge = null;
+  var edge__2 = function(graph, edge_vector) {
+    return cljs.core.apply.call(null, edge, graph, edge_vector)
   };
-  var split_to_words = function(string, var_args) {
-    var p__9274 = null;
-    if(goog.isDef(var_args)) {
-      p__9274 = cljs.core.array_seq(Array.prototype.slice.call(arguments, 1), 0)
+  var edge__3 = function(graph, vertex_1, vertex_2) {
+    return edge.call(null, graph, vertex_1, vertex_2, null, null)
+  };
+  var edge__4 = function(graph, vertex_1, vertex_2, edge_type) {
+    return edge.call(null, graph, vertex_1, vertex_2, edge_type, null)
+  };
+  var edge__5 = function(graph, vertex_1, vertex_2, edge_type, edge_label) {
+    return cljs.core.update_in.call(null, cljs.core.update_in.call(null, prosediff.directed_graph.vertex.call(null, prosediff.directed_graph.vertex.call(null, graph, vertex_1), vertex_2), cljs.core.PersistentVector.fromArray([vertex_1, "\ufdd0'out", edge_type], true), cljs.core.fnil.call(null, cljs.core.assoc, cljs.core.ObjMap.EMPTY), vertex_2, edge_label), cljs.core.PersistentVector.fromArray([vertex_2, "\ufdd0'in", edge_type], true), cljs.core.fnil.call(null, cljs.core.assoc, cljs.core.ObjMap.EMPTY), 
+    vertex_1, edge_label)
+  };
+  edge = function(graph, vertex_1, vertex_2, edge_type, edge_label) {
+    switch(arguments.length) {
+      case 2:
+        return edge__2.call(this, graph, vertex_1);
+      case 3:
+        return edge__3.call(this, graph, vertex_1, vertex_2);
+      case 4:
+        return edge__4.call(this, graph, vertex_1, vertex_2, edge_type);
+      case 5:
+        return edge__5.call(this, graph, vertex_1, vertex_2, edge_type, edge_label)
     }
-    return split_to_words__delegate.call(this, string, p__9274)
+    throw new Error("Invalid arity: " + arguments.length);
   };
-  split_to_words.cljs$lang$maxFixedArity = 1;
-  split_to_words.cljs$lang$applyTo = function(arglist__9277) {
-    var string = cljs.core.first(arglist__9277);
-    var p__9274 = cljs.core.rest(arglist__9277);
-    return split_to_words__delegate(string, p__9274)
-  };
-  split_to_words.cljs$lang$arity$variadic = split_to_words__delegate;
-  return split_to_words
+  edge.cljs$lang$arity$2 = edge__2;
+  edge.cljs$lang$arity$3 = edge__3;
+  edge.cljs$lang$arity$4 = edge__4;
+  edge.cljs$lang$arity$5 = edge__5;
+  return edge
 }();
-prosediff.core.indexed_word_list = function indexed_word_list(word_list) {
-  return cljs.core.map.call(null, cljs.core.vector, cljs.core.iterate.call(null, cljs.core.inc, 0), word_list)
+prosediff.directed_graph.edge_start = function edge_start(edge) {
+  return cljs.core.nth.call(null, edge, 0)
 };
-prosediff.core.pigeonhole = function pigeonhole(L, key_func, val_func) {
-  return cljs.core.apply.call(null, cljs.core.merge_with, cljs.core.comp.call(null, cljs.core.vec, cljs.core.flatten, cljs.core.vector), cljs.core.map.call(null, cljs.core.partial.call(null, cljs.core.apply, cljs.core.hash_map), cljs.core.map.call(null, function(p1__9278_SHARP_) {
-    return cljs.core.vector.call(null, key_func.call(null, p1__9278_SHARP_), cljs.core.vector.call(null, val_func.call(null, p1__9278_SHARP_)))
-  }, L)))
+prosediff.directed_graph.edge_end = function edge_end(edge) {
+  return cljs.core.nth.call(null, edge, 1)
 };
-prosediff.core.map_over_values = function map_over_values(f, m) {
-  return cljs.core.into.call(null, cljs.core.empty.call(null, m), function() {
-    var iter__2498__auto__ = function iter__9283(s__9284) {
+prosediff.directed_graph.edge_type = function edge_type(edge) {
+  return cljs.core.nth.call(null, edge, 2)
+};
+prosediff.directed_graph.edge_label = function edge_label(edge) {
+  return cljs.core.nth.call(null, edge, 3)
+};
+prosediff.directed_graph.out_edge_types = function out_edge_types(graph, vertex_name) {
+  return cljs.core.keys.call(null, (new cljs.core.Keyword("\ufdd0'out")).call(null, graph.call(null, vertex_name)))
+};
+prosediff.directed_graph.in_edge_types = function in_edge_types(graph, vertex_name) {
+  return cljs.core.keys.call(null, (new cljs.core.Keyword("\ufdd0'in")).call(null, graph.call(null, vertex_name)))
+};
+prosediff.directed_graph.out_edges = function() {
+  var out_edges = null;
+  var out_edges__2 = function(graph, vertex_name) {
+    var o_v = cljs.core.get_in.call(null, graph, cljs.core.PersistentVector.fromArray([vertex_name, "\ufdd0'out"], true));
+    var iter__2498__auto__ = function iter__2861(s__2862) {
       return new cljs.core.LazySeq(null, false, function() {
-        var s__9284__$1 = s__9284;
+        var s__2862__$1 = s__2862;
         while(true) {
-          if(cljs.core.seq.call(null, s__9284__$1)) {
-            var vec__9286 = cljs.core.first.call(null, s__9284__$1);
-            var k = cljs.core.nth.call(null, vec__9286, 0, null);
-            var v = cljs.core.nth.call(null, vec__9286, 1, null);
-            return cljs.core.cons.call(null, cljs.core.PersistentVector.fromArray([k, f.call(null, v)], true), iter__9283.call(null, cljs.core.rest.call(null, s__9284__$1)))
+          if(cljs.core.seq.call(null, s__2862__$1)) {
+            var edge_type = cljs.core.first.call(null, s__2862__$1);
+            var iterys__2496__auto__ = function(s__2862__$1, edge_type) {
+              return function iter__2863(s__2864) {
+                return new cljs.core.LazySeq(null, false, function(s__2862__$1, edge_type) {
+                  return function() {
+                    var s__2864__$1 = s__2864;
+                    while(true) {
+                      if(cljs.core.seq.call(null, s__2864__$1)) {
+                        var vec__2868 = cljs.core.first.call(null, s__2864__$1);
+                        var other_vertex = cljs.core.nth.call(null, vec__2868, 0, null);
+                        var edge_label = cljs.core.nth.call(null, vec__2868, 1, null);
+                        return cljs.core.cons.call(null, cljs.core.PersistentVector.fromArray([vertex_name, other_vertex, edge_type, edge_label], true), iter__2863.call(null, cljs.core.rest.call(null, s__2864__$1)))
+                      }else {
+                        return null
+                      }
+                      break
+                    }
+                  }
+                }(s__2862__$1, edge_type), null)
+              }
+            }(s__2862__$1, edge_type);
+            var fs__2497__auto__ = cljs.core.seq.call(null, iterys__2496__auto__.call(null, o_v.call(null, edge_type)));
+            if(fs__2497__auto__) {
+              return cljs.core.concat.call(null, fs__2497__auto__, iter__2861.call(null, cljs.core.rest.call(null, s__2862__$1)))
+            }else {
+              var G__2873 = cljs.core.rest.call(null, s__2862__$1);
+              s__2862__$1 = G__2873;
+              continue
+            }
           }else {
             return null
           }
@@ -21043,263 +20933,461 @@ prosediff.core.map_over_values = function map_over_values(f, m) {
         }
       }, null)
     };
-    return iter__2498__auto__.call(null, m)
+    return iter__2498__auto__.call(null, cljs.core.keys.call(null, o_v))
+  };
+  var out_edges__3 = function(graph, vertex_name, edge_type) {
+    var o_v = cljs.core.get_in.call(null, graph, cljs.core.PersistentVector.fromArray([vertex_name, "\ufdd0'out"], true));
+    var iter__2498__auto__ = function iter__2869(s__2870) {
+      return new cljs.core.LazySeq(null, false, function() {
+        var s__2870__$1 = s__2870;
+        while(true) {
+          if(cljs.core.seq.call(null, s__2870__$1)) {
+            var vec__2872 = cljs.core.first.call(null, s__2870__$1);
+            var other_vertex = cljs.core.nth.call(null, vec__2872, 0, null);
+            var edge_label = cljs.core.nth.call(null, vec__2872, 1, null);
+            return cljs.core.cons.call(null, cljs.core.PersistentVector.fromArray([vertex_name, other_vertex, edge_type, edge_label], true), iter__2869.call(null, cljs.core.rest.call(null, s__2870__$1)))
+          }else {
+            return null
+          }
+          break
+        }
+      }, null)
+    };
+    return iter__2498__auto__.call(null, o_v.call(null, edge_type))
+  };
+  out_edges = function(graph, vertex_name, edge_type) {
+    switch(arguments.length) {
+      case 2:
+        return out_edges__2.call(this, graph, vertex_name);
+      case 3:
+        return out_edges__3.call(this, graph, vertex_name, edge_type)
+    }
+    throw new Error("Invalid arity: " + arguments.length);
+  };
+  out_edges.cljs$lang$arity$2 = out_edges__2;
+  out_edges.cljs$lang$arity$3 = out_edges__3;
+  return out_edges
+}();
+prosediff.directed_graph.in_edges = function() {
+  var in_edges = null;
+  var in_edges__2 = function(graph, vertex_name) {
+    var i_v = cljs.core.get_in.call(null, graph, cljs.core.PersistentVector.fromArray([vertex_name, "\ufdd0'in"], true));
+    var iter__2498__auto__ = function iter__2886(s__2887) {
+      return new cljs.core.LazySeq(null, false, function() {
+        var s__2887__$1 = s__2887;
+        while(true) {
+          if(cljs.core.seq.call(null, s__2887__$1)) {
+            var edge_type = cljs.core.first.call(null, s__2887__$1);
+            var iterys__2496__auto__ = function(s__2887__$1, edge_type) {
+              return function iter__2888(s__2889) {
+                return new cljs.core.LazySeq(null, false, function(s__2887__$1, edge_type) {
+                  return function() {
+                    var s__2889__$1 = s__2889;
+                    while(true) {
+                      if(cljs.core.seq.call(null, s__2889__$1)) {
+                        var vec__2893 = cljs.core.first.call(null, s__2889__$1);
+                        var other_vertex = cljs.core.nth.call(null, vec__2893, 0, null);
+                        var edge_label = cljs.core.nth.call(null, vec__2893, 1, null);
+                        return cljs.core.cons.call(null, cljs.core.PersistentVector.fromArray([other_vertex, vertex_name, edge_type, edge_label], true), iter__2888.call(null, cljs.core.rest.call(null, s__2889__$1)))
+                      }else {
+                        return null
+                      }
+                      break
+                    }
+                  }
+                }(s__2887__$1, edge_type), null)
+              }
+            }(s__2887__$1, edge_type);
+            var fs__2497__auto__ = cljs.core.seq.call(null, iterys__2496__auto__.call(null, i_v.call(null, edge_type)));
+            if(fs__2497__auto__) {
+              return cljs.core.concat.call(null, fs__2497__auto__, iter__2886.call(null, cljs.core.rest.call(null, s__2887__$1)))
+            }else {
+              var G__2898 = cljs.core.rest.call(null, s__2887__$1);
+              s__2887__$1 = G__2898;
+              continue
+            }
+          }else {
+            return null
+          }
+          break
+        }
+      }, null)
+    };
+    return iter__2498__auto__.call(null, cljs.core.keys.call(null, i_v))
+  };
+  var in_edges__3 = function(graph, vertex_name, edge_type) {
+    var i_v = cljs.core.get_in.call(null, graph, cljs.core.PersistentVector.fromArray([vertex_name, "\ufdd0'in"], true));
+    var iter__2498__auto__ = function iter__2894(s__2895) {
+      return new cljs.core.LazySeq(null, false, function() {
+        var s__2895__$1 = s__2895;
+        while(true) {
+          if(cljs.core.seq.call(null, s__2895__$1)) {
+            var vec__2897 = cljs.core.first.call(null, s__2895__$1);
+            var other_vertex = cljs.core.nth.call(null, vec__2897, 0, null);
+            var edge_label = cljs.core.nth.call(null, vec__2897, 1, null);
+            return cljs.core.cons.call(null, cljs.core.PersistentVector.fromArray([other_vertex, vertex_name, edge_type, edge_label], true), iter__2894.call(null, cljs.core.rest.call(null, s__2895__$1)))
+          }else {
+            return null
+          }
+          break
+        }
+      }, null)
+    };
+    return iter__2498__auto__.call(null, i_v.call(null, edge_type))
+  };
+  in_edges = function(graph, vertex_name, edge_type) {
+    switch(arguments.length) {
+      case 2:
+        return in_edges__2.call(this, graph, vertex_name);
+      case 3:
+        return in_edges__3.call(this, graph, vertex_name, edge_type)
+    }
+    throw new Error("Invalid arity: " + arguments.length);
+  };
+  in_edges.cljs$lang$arity$2 = in_edges__2;
+  in_edges.cljs$lang$arity$3 = in_edges__3;
+  return in_edges
+}();
+prosediff.directed_graph.contains_vertex_QMARK_ = function contains_vertex_QMARK_(graph, vertex_name) {
+  return graph.call(null, vertex_name)
+};
+prosediff.directed_graph.all_vertices = function all_vertices(graph) {
+  return cljs.core.into.call(null, cljs.core.ObjMap.EMPTY, function() {
+    var iter__2498__auto__ = function iter__2905(s__2906) {
+      return new cljs.core.LazySeq(null, false, function() {
+        var s__2906__$1 = s__2906;
+        while(true) {
+          if(cljs.core.seq.call(null, s__2906__$1)) {
+            var vec__2909 = cljs.core.first.call(null, s__2906__$1);
+            var v = cljs.core.nth.call(null, vec__2909, 0, null);
+            var map__2910 = cljs.core.nth.call(null, vec__2909, 1, null);
+            var map__2910__$1 = cljs.core.seq_QMARK_.call(null, map__2910) ? cljs.core.apply.call(null, cljs.core.hash_map, map__2910) : map__2910;
+            var d = cljs.core._lookup.call(null, map__2910__$1, "\ufdd0'data", null);
+            return cljs.core.cons.call(null, cljs.core.PersistentVector.fromArray([v, d], true), iter__2905.call(null, cljs.core.rest.call(null, s__2906__$1)))
+          }else {
+            return null
+          }
+          break
+        }
+      }, null)
+    };
+    return iter__2498__auto__.call(null, graph)
   }())
 };
-prosediff.core.word_indices_map = function word_indices_map(word_list) {
-  return prosediff.core.pigeonhole.call(null, prosediff.core.indexed_word_list.call(null, word_list), cljs.core.second, cljs.core.first)
-};
-prosediff.core.match_graph = function match_graph(left_word_list, right_word_list) {
-  var right_word_indices_map = prosediff.core.word_indices_map.call(null, right_word_list);
-  return cljs.core.map.call(null, function(v) {
-    return cljs.core.ObjMap.fromObject(["\ufdd0'word", "\ufdd0'left-index", "\ufdd0'right-indices"], {"\ufdd0'word":cljs.core.second.call(null, v), "\ufdd0'left-index":cljs.core.first.call(null, v), "\ufdd0'right-indices":cljs.core._lookup.call(null, right_word_indices_map, cljs.core.second.call(null, v), null)})
-  }, prosediff.core.indexed_word_list.call(null, left_word_list))
-};
-prosediff.core.first_edge = function first_edge(graph_node) {
-  return cljs.core.ObjMap.fromObject(["\ufdd0'word", "\ufdd0'left-index", "\ufdd0'right-index"], {"\ufdd0'word":(new cljs.core.Keyword("\ufdd0'word")).call(null, graph_node), "\ufdd0'left-index":(new cljs.core.Keyword("\ufdd0'left-index")).call(null, graph_node), "\ufdd0'right-index":cljs.core.first.call(null, (new cljs.core.Keyword("\ufdd0'right-indices")).call(null, graph_node))})
-};
-prosediff.core.rest_edges = function rest_edges(graph_node) {
-  if(cljs.core.empty_QMARK_.call(null, cljs.core.rest.call(null, (new cljs.core.Keyword("\ufdd0'right-indices")).call(null, graph_node)))) {
-    return cljs.core.ObjMap.EMPTY
-  }else {
-    return cljs.core.ObjMap.fromObject(["\ufdd0'word", "\ufdd0'left-index", "\ufdd0'right-indices"], {"\ufdd0'word":(new cljs.core.Keyword("\ufdd0'word")).call(null, graph_node), "\ufdd0'left-index":(new cljs.core.Keyword("\ufdd0'left-index")).call(null, graph_node), "\ufdd0'right-indices":cljs.core.rest.call(null, (new cljs.core.Keyword("\ufdd0'right-indices")).call(null, graph_node))})
-  }
-};
-prosediff.core.graph_node_edges = function graph_node_edges(graph_node) {
-  if(cljs.core.empty_QMARK_.call(null, (new cljs.core.Keyword("\ufdd0'right-indices")).call(null, graph_node))) {
-    return null
-  }else {
-    return cljs.core.cons.call(null, prosediff.core.first_edge.call(null, graph_node), graph_node_edges.call(null, prosediff.core.rest_edges.call(null, graph_node)))
-  }
-};
-prosediff.core.sequence_to_range = function sequence_to_range(s) {
-  return cljs.core.ObjMap.fromObject(["\ufdd0'left-start", "\ufdd0'right-start", "\ufdd0'length", "\ufdd0'words"], {"\ufdd0'left-start":(new cljs.core.Keyword("\ufdd0'left-index")).call(null, cljs.core.first.call(null, s)), "\ufdd0'right-start":(new cljs.core.Keyword("\ufdd0'right-index")).call(null, cljs.core.first.call(null, s)), "\ufdd0'length":1 + ((new cljs.core.Keyword("\ufdd0'left-index")).call(null, cljs.core.last.call(null, s)) - (new cljs.core.Keyword("\ufdd0'left-index")).call(null, cljs.core.first.call(null, 
-  s))), "\ufdd0'words":cljs.core.map.call(null, "\ufdd0'word", s)})
-};
-prosediff.core.match_with_single_sequence = function match_with_single_sequence(sequence, graph_edge) {
-  if(function() {
-    var and__3822__auto__ = cljs.core._EQ_.call(null, (new cljs.core.Keyword("\ufdd0'left-index")).call(null, graph_edge), 1 + (new cljs.core.Keyword("\ufdd0'left-index")).call(null, cljs.core.first.call(null, sequence)));
-    if(and__3822__auto__) {
-      return cljs.core._EQ_.call(null, (new cljs.core.Keyword("\ufdd0'right-index")).call(null, graph_edge), 1 + (new cljs.core.Keyword("\ufdd0'right-index")).call(null, cljs.core.first.call(null, sequence)))
-    }else {
-      return and__3822__auto__
+prosediff.directed_graph.all_edges = function() {
+  var all_edges = null;
+  var all_edges__1 = function(graph) {
+    return cljs.core.apply.call(null, cljs.core.concat, function() {
+      var iter__2498__auto__ = function iter__2915(s__2916) {
+        return new cljs.core.LazySeq(null, false, function() {
+          var s__2916__$1 = s__2916;
+          while(true) {
+            if(cljs.core.seq.call(null, s__2916__$1)) {
+              var v = cljs.core.first.call(null, s__2916__$1);
+              return cljs.core.cons.call(null, prosediff.directed_graph.out_edges.call(null, graph, v), iter__2915.call(null, cljs.core.rest.call(null, s__2916__$1)))
+            }else {
+              return null
+            }
+            break
+          }
+        }, null)
+      };
+      return iter__2498__auto__.call(null, cljs.core.keys.call(null, prosediff.directed_graph.all_vertices.call(null, graph)))
+    }())
+  };
+  var all_edges__2 = function(graph, edge_type) {
+    return cljs.core.apply.call(null, cljs.core.concat, function() {
+      var iter__2498__auto__ = function iter__2917(s__2918) {
+        return new cljs.core.LazySeq(null, false, function() {
+          var s__2918__$1 = s__2918;
+          while(true) {
+            if(cljs.core.seq.call(null, s__2918__$1)) {
+              var v = cljs.core.first.call(null, s__2918__$1);
+              return cljs.core.cons.call(null, prosediff.directed_graph.out_edges.call(null, graph, v, edge_type), iter__2917.call(null, cljs.core.rest.call(null, s__2918__$1)))
+            }else {
+              return null
+            }
+            break
+          }
+        }, null)
+      };
+      return iter__2498__auto__.call(null, cljs.core.keys.call(null, prosediff.directed_graph.all_vertices.call(null, graph)))
+    }())
+  };
+  all_edges = function(graph, edge_type) {
+    switch(arguments.length) {
+      case 1:
+        return all_edges__1.call(this, graph);
+      case 2:
+        return all_edges__2.call(this, graph, edge_type)
     }
-  }()) {
-    return cljs.core.ObjMap.fromObject(["\ufdd0'match"], {"\ufdd0'match":cljs.core.cons.call(null, graph_edge, sequence)})
-  }else {
-    return cljs.core.ObjMap.fromObject(["\ufdd0'non-match"], {"\ufdd0'non-match":sequence})
-  }
-};
-prosediff.core.match_with_sequences = function match_with_sequences(sequence_list, graph_edge) {
-  var results = cljs.core.map.call(null, function(p1__9287_SHARP_) {
-    return prosediff.core.match_with_single_sequence.call(null, p1__9287_SHARP_, graph_edge)
-  }, sequence_list);
-  var matches = cljs.core.map.call(null, "\ufdd0'match", cljs.core.filter.call(null, "\ufdd0'match", results));
-  var non_matches = cljs.core.map.call(null, "\ufdd0'non-match", cljs.core.filter.call(null, "\ufdd0'non-match", results));
-  if(cljs.core.empty_QMARK_.call(null, matches)) {
-    return cljs.core.ObjMap.fromObject(["\ufdd0'new", "\ufdd0'non-matches"], {"\ufdd0'new":cljs.core.list.call(null, cljs.core.list.call(null, graph_edge)), "\ufdd0'non-matches":non_matches})
-  }else {
-    return cljs.core.ObjMap.fromObject(["\ufdd0'matches", "\ufdd0'non-matches"], {"\ufdd0'matches":matches, "\ufdd0'non-matches":non_matches})
-  }
-};
-prosediff.core.extend_sequences_from_node = function extend_sequences_from_node(sequence_list, graph_node) {
-  var edges = prosediff.core.graph_node_edges.call(null, graph_node);
-  var results = cljs.core.ObjMap.fromObject(["\ufdd0'matches", "\ufdd0'non-matches"], {"\ufdd0'matches":null, "\ufdd0'non-matches":sequence_list});
-  while(true) {
-    if(cljs.core.empty_QMARK_.call(null, edges)) {
-      return results
-    }else {
-      var new_results = prosediff.core.match_with_sequences.call(null, (new cljs.core.Keyword("\ufdd0'non-matches")).call(null, results), cljs.core.first.call(null, edges));
-      var G__9289 = cljs.core.rest.call(null, edges);
-      var G__9290 = cljs.core.ObjMap.fromObject(["\ufdd0'matches", "\ufdd0'non-matches"], {"\ufdd0'matches":cljs.core.concat.call(null, (new cljs.core.Keyword("\ufdd0'matches")).call(null, results), (new cljs.core.Keyword("\ufdd0'matches")).call(null, new_results), (new cljs.core.Keyword("\ufdd0'new")).call(null, new_results)), "\ufdd0'non-matches":(new cljs.core.Keyword("\ufdd0'non-matches")).call(null, new_results)});
-      edges = G__9289;
-      results = G__9290;
-      continue
-    }
-    break
-  }
-};
-prosediff.core.find_common_subsequences = function find_common_subsequences(left_string, right_string) {
-  prosediff.core.log.call(null, [cljs.core.str("Matching strings of lengths "), cljs.core.str(cljs.core.count.call(null, left_string)), cljs.core.str(" (left) and "), cljs.core.str(cljs.core.count.call(null, right_string)), cljs.core.str(" (right).")].join(""));
-  return cljs.core.map.call(null, cljs.core.reverse, function() {
-    var m_g = cljs.core.apply.call(null, prosediff.core.match_graph, cljs.core.map.call(null, cljs.core.comp.call(null, prosediff.core.split_to_words, function(p1__9288_SHARP_) {
-      return p1__9288_SHARP_.toLowerCase()
-    }), cljs.core.PersistentVector.fromArray([left_string, right_string], true)));
-    prosediff.core.log.call(null, [cljs.core.str("Edges in graph: "), cljs.core.str(cljs.core.reduce.call(null, cljs.core._PLUS_, 0, cljs.core.map.call(null, cljs.core.comp.call(null, cljs.core.count, "\ufdd0'right-indices"), m_g)))].join(""));
-    var graph = m_g;
-    var live = null;
-    var complete = null;
-    while(true) {
-      if(cljs.core.empty_QMARK_.call(null, graph)) {
-        return cljs.core.concat.call(null, live, complete)
-      }else {
-        var new_sequences = prosediff.core.extend_sequences_from_node.call(null, live, cljs.core.first.call(null, graph));
-        var G__9291 = cljs.core.rest.call(null, graph);
-        var G__9292 = (new cljs.core.Keyword("\ufdd0'matches")).call(null, new_sequences);
-        var G__9293 = cljs.core.concat.call(null, complete, (new cljs.core.Keyword("\ufdd0'non-matches")).call(null, new_sequences));
-        graph = G__9291;
-        live = G__9292;
-        complete = G__9293;
-        continue
-      }
-      break
-    }
-  }())
-};
-prosediff.core.both_sides_range_subset_QMARK_ = function both_sides_range_subset_QMARK_(A_range, B_range) {
-  var and__3822__auto__ = (new cljs.core.Keyword("\ufdd0'left-start")).call(null, A_range) >= (new cljs.core.Keyword("\ufdd0'left-start")).call(null, B_range);
-  if(and__3822__auto__) {
-    var and__3822__auto____$1 = (new cljs.core.Keyword("\ufdd0'right-start")).call(null, A_range) >= (new cljs.core.Keyword("\ufdd0'right-start")).call(null, B_range);
-    if(and__3822__auto____$1) {
-      return(new cljs.core.Keyword("\ufdd0'left-start")).call(null, A_range) + (new cljs.core.Keyword("\ufdd0'length")).call(null, A_range) <= (new cljs.core.Keyword("\ufdd0'left-start")).call(null, B_range) + (new cljs.core.Keyword("\ufdd0'length")).call(null, B_range)
-    }else {
-      return and__3822__auto____$1
-    }
-  }else {
-    return and__3822__auto__
-  }
-};
-prosediff.core.remove_redundant_ranges = function remove_redundant_ranges(ranges_list) {
-  prosediff.core.log.call(null, [cljs.core.str("Unfiltered matches: "), cljs.core.str(cljs.core.count.call(null, ranges_list))].join(""));
-  var r_map = prosediff.core.pigeonhole.call(null, ranges_list, "\ufdd0'left-start", cljs.core.identity);
-  return cljs.core.remove.call(null, cljs.core.empty_QMARK_, cljs.core.map.call(null, cljs.core.comp.call(null, function(pair) {
-    if(cljs.core.empty_QMARK_.call(null, cljs.core.filter.call(null, function(p1__9294_SHARP_) {
-      var and__3822__auto__ = prosediff.core.both_sides_range_subset_QMARK_.call(null, cljs.core.first.call(null, pair), p1__9294_SHARP_);
-      if(cljs.core.truth_(and__3822__auto__)) {
-        return!cljs.core._EQ_.call(null, p1__9294_SHARP_, cljs.core.first.call(null, pair))
+    throw new Error("Invalid arity: " + arguments.length);
+  };
+  all_edges.cljs$lang$arity$1 = all_edges__1;
+  all_edges.cljs$lang$arity$2 = all_edges__2;
+  return all_edges
+}();
+prosediff.directed_graph.edges_between = function() {
+  var edges_between = null;
+  var edges_between__3 = function(graph, vertex_1, vertex_2) {
+    return cljs.core.apply.call(null, cljs.core.concat, function() {
+      var iter__2498__auto__ = function iter__2921(s__2922) {
+        return new cljs.core.LazySeq(null, false, function() {
+          var s__2922__$1 = s__2922;
+          while(true) {
+            if(cljs.core.seq.call(null, s__2922__$1)) {
+              var edge_type = cljs.core.first.call(null, s__2922__$1);
+              return cljs.core.cons.call(null, edges_between.call(null, graph, vertex_1, vertex_2, edge_type), iter__2921.call(null, cljs.core.rest.call(null, s__2922__$1)))
+            }else {
+              return null
+            }
+            break
+          }
+        }, null)
+      };
+      return iter__2498__auto__.call(null, prosediff.directed_graph.out_edge_types.call(null, graph, vertex_1))
+    }())
+  };
+  var edges_between__4 = function(graph, vertex_1, vertex_2, edge_type) {
+    if(function() {
+      var and__3822__auto__ = cljs.core.contains_QMARK_.call(null, cljs.core.set.call(null, cljs.core.keys.call(null, cljs.core.get_in.call(null, graph, cljs.core.PersistentVector.fromArray([vertex_1, "\ufdd0'out", edge_type], true)))), vertex_2);
+      if(and__3822__auto__) {
+        return cljs.core.contains_QMARK_.call(null, cljs.core.set.call(null, cljs.core.keys.call(null, cljs.core.get_in.call(null, graph, cljs.core.PersistentVector.fromArray([vertex_2, "\ufdd0'in", edge_type], true)))), vertex_1)
       }else {
         return and__3822__auto__
       }
-    }, cljs.core.second.call(null, pair)))) {
-      return cljs.core.first.call(null, pair)
+    }()) {
+      return cljs.core.list.call(null, cljs.core.PersistentVector.fromArray([vertex_1, vertex_2, edge_type, cljs.core._lookup.call(null, cljs.core.get_in.call(null, graph, cljs.core.PersistentVector.fromArray([vertex_1, "\ufdd0'out", edge_type], true)), vertex_2, null)], true))
     }else {
       return null
     }
-  }, cljs.core.juxt.call(null, cljs.core.identity, cljs.core.comp.call(null, cljs.core.partial.call(null, cljs.core.apply, cljs.core.concat), cljs.core.partial.call(null, cljs.core.map, function(p1__9295_SHARP_) {
-    return cljs.core._lookup.call(null, r_map, p1__9295_SHARP_, null)
-  }), cljs.core.partial.call(null, cljs.core.apply, function(p1__9296_SHARP_, p2__9297_SHARP_) {
-    return cljs.core.range.call(null, p1__9296_SHARP_ - p2__9297_SHARP_, 1 + p1__9296_SHARP_ + p2__9297_SHARP_)
-  }), cljs.core.juxt.call(null, "\ufdd0'left-start", "\ufdd0'length")))), cljs.core.apply.call(null, cljs.core.concat, cljs.core.vals.call(null, r_map))))
-};
-prosediff.core.attach_IDs = function attach_IDs(dict_list) {
-  prosediff.core.log.call(null, [cljs.core.str("Filtered matches: "), cljs.core.str(cljs.core.count.call(null, dict_list))].join(""));
-  var id_list = cljs.core.range.call(null, cljs.core.count.call(null, dict_list));
-  var list_no_ids = dict_list;
-  var ids = id_list;
-  var list_with_ids = null;
-  while(true) {
-    if(cljs.core.empty_QMARK_.call(null, list_no_ids)) {
-      return list_with_ids
-    }else {
-      var G__9298 = cljs.core.rest.call(null, list_no_ids);
-      var G__9299 = cljs.core.rest.call(null, ids);
-      var G__9300 = cljs.core.cons.call(null, cljs.core.conj.call(null, cljs.core.first.call(null, list_no_ids), cljs.core.ObjMap.fromObject(["\ufdd0'block-id"], {"\ufdd0'block-id":cljs.core.first.call(null, ids)})), list_with_ids);
-      list_no_ids = G__9298;
-      ids = G__9299;
-      list_with_ids = G__9300;
-      continue
+  };
+  edges_between = function(graph, vertex_1, vertex_2, edge_type) {
+    switch(arguments.length) {
+      case 3:
+        return edges_between__3.call(this, graph, vertex_1, vertex_2);
+      case 4:
+        return edges_between__4.call(this, graph, vertex_1, vertex_2, edge_type)
     }
-    break
-  }
-};
-prosediff.core.common_words_threshold = 2;
-prosediff.core.remove_spurious = function remove_spurious(left_string, right_string, ranges_list) {
-  var vec__9303 = cljs.core.map.call(null, function(string) {
-    return cljs.core.comp.call(null, cljs.core.partial.call(null, prosediff.core.map_over_values, cljs.core.count), prosediff.core.word_indices_map, prosediff.core.split_to_words, function(p1__9301_SHARP_) {
-      return p1__9301_SHARP_.toLowerCase()
-    }).call(null, string)
-  }, cljs.core.PersistentVector.fromArray([left_string, right_string], true));
-  var left_counts = cljs.core.nth.call(null, vec__9303, 0, null);
-  var right_counts = cljs.core.nth.call(null, vec__9303, 1, null);
-  return cljs.core.filter.call(null, function(r) {
-    var or__3824__auto__ = function() {
-      var or__3824__auto__ = cljs.core._lookup.call(null, left_counts, cljs.core.comp.call(null, cljs.core.str, "\ufdd0'words", r), null);
+    throw new Error("Invalid arity: " + arguments.length);
+  };
+  edges_between.cljs$lang$arity$3 = edges_between__3;
+  edges_between.cljs$lang$arity$4 = edges_between__4;
+  return edges_between
+}();
+prosediff.directed_graph.edges = function() {
+  var edges = null;
+  var edges__1 = function(graph) {
+    return edges.call(null, graph, cljs.core.PersistentVector.EMPTY)
+  };
+  var edges__2 = function(graph, query) {
+    return edges.call(null, graph, "\ufdd0'_", query)
+  };
+  var edges__3 = function(graph, wildcard, query) {
+    var vec__2927 = query;
+    var vertex_1 = cljs.core.nth.call(null, vec__2927, 0, null);
+    var vertex_2 = cljs.core.nth.call(null, vec__2927, 1, null);
+    var edge_type = cljs.core.nth.call(null, vec__2927, 2, null);
+    var edge_label = cljs.core.nth.call(null, vec__2927, 3, null);
+    var arg_count = cljs.core.count.call(null, query);
+    var query_form = cljs.core.PersistentVector.fromArray([function() {
+      var or__3824__auto__ = cljs.core._EQ_.call(null, vertex_1, wildcard);
+      if(or__3824__auto__) {
+        return or__3824__auto__
+      }else {
+        return arg_count < 1
+      }
+    }() ? 0 : 1, function() {
+      var or__3824__auto__ = cljs.core._EQ_.call(null, vertex_2, wildcard);
+      if(or__3824__auto__) {
+        return or__3824__auto__
+      }else {
+        return arg_count < 2
+      }
+    }() ? 0 : 1, function() {
+      var or__3824__auto__ = cljs.core._EQ_.call(null, edge_type, wildcard);
+      if(or__3824__auto__) {
+        return or__3824__auto__
+      }else {
+        return arg_count < 3
+      }
+    }() ? 0 : 1], true);
+    var no_label_filter = function() {
+      var or__3824__auto__ = cljs.core._EQ_.call(null, edge_label, wildcard);
+      if(or__3824__auto__) {
+        return or__3824__auto__
+      }else {
+        return cljs.core._EQ_.call(null, edge_label, null)
+      }
+    }() ? true : false;
+    return cljs.core.filter.call(null, function(p__2928) {
+      var vec__2929 = p__2928;
+      var v_1 = cljs.core.nth.call(null, vec__2929, 0, null);
+      var v_2 = cljs.core.nth.call(null, vec__2929, 1, null);
+      var e_t = cljs.core.nth.call(null, vec__2929, 2, null);
+      var e_l = cljs.core.nth.call(null, vec__2929, 3, null);
+      var or__3824__auto__ = no_label_filter;
       if(cljs.core.truth_(or__3824__auto__)) {
         return or__3824__auto__
       }else {
-        return 0
+        return cljs.core._EQ_.call(null, e_l, edge_label)
       }
-    }() <= prosediff.core.common_words_threshold;
-    if(or__3824__auto__) {
-      return or__3824__auto__
-    }else {
-      return function() {
-        var or__3824__auto____$1 = cljs.core._lookup.call(null, right_counts, cljs.core.comp.call(null, cljs.core.str, "\ufdd0'words", r), null);
-        if(cljs.core.truth_(or__3824__auto____$1)) {
-          return or__3824__auto____$1
-        }else {
-          return 0
-        }
-      }() <= prosediff.core.common_words_threshold
-    }
-  }, ranges_list)
-};
-prosediff.core.filtered_match_ranges = function filtered_match_ranges(left_string, right_string) {
-  return cljs.core.comp.call(null, prosediff.core.attach_IDs, prosediff.core.remove_redundant_ranges, cljs.core.partial.call(null, prosediff.core.remove_spurious, left_string, right_string), cljs.core.partial.call(null, cljs.core.map, prosediff.core.sequence_to_range), prosediff.core.find_common_subsequences).call(null, left_string, right_string)
-};
-prosediff.core.tagged_word_lists = function tagged_word_lists(left_string, right_string) {
-  prosediff.core.id_labeling_fold_func = function id_labeling_fold_func(side, words_index_map, block_range) {
-    var indices = cljs.core.range.call(null, side.call(null, block_range), side.call(null, block_range) + (new cljs.core.Keyword("\ufdd0'length")).call(null, block_range));
-    return cljs.core.reduce.call(null, function(w_d, indx) {
-      return cljs.core.update_in.call(null, w_d, cljs.core.PersistentVector.fromArray([indx, "\ufdd0'block-ids"], true), function(L) {
-        return cljs.core.cons.call(null, (new cljs.core.Keyword("\ufdd0'block-id")).call(null, block_range), L)
-      })
-    }, words_index_map, indices)
-  };
-  var ranges_with_IDs = prosediff.core.filtered_match_ranges.call(null, left_string, right_string);
-  var vec__9305 = cljs.core.map.call(null, function(string) {
-    return cljs.core.into.call(null, cljs.core.sorted_map.call(null), cljs.core.map.call(null, function(pair) {
-      return cljs.core.PersistentVector.fromArray([cljs.core.first.call(null, pair), cljs.core.ObjMap.fromObject(["\ufdd0'word", "\ufdd0'block-ids"], {"\ufdd0'word":cljs.core.second.call(null, pair), "\ufdd0'block-ids":null})], true)
-    }, prosediff.core.indexed_word_list.call(null, prosediff.core.split_to_words.call(null, string))))
-  }, cljs.core.PersistentVector.fromArray([left_string, right_string], true));
-  var left_words_index_map = cljs.core.nth.call(null, vec__9305, 0, null);
-  var right_words_index_map = cljs.core.nth.call(null, vec__9305, 1, null);
-  return cljs.core.map.call(null, function(side, words_index_map) {
-    return cljs.core.vals.call(null, cljs.core.reduce.call(null, cljs.core.partial.call(null, prosediff.core.id_labeling_fold_func, side), words_index_map, ranges_with_IDs))
-  }, cljs.core.PersistentVector.fromArray(["\ufdd0'left-start", "\ufdd0'right-start"], true), cljs.core.PersistentVector.fromArray([left_words_index_map, right_words_index_map], true))
-};
-prosediff.core.reinsert_spaces = function reinsert_spaces(t_w_list, string) {
-  return cljs.core.map.call(null, function(tagged, spacified) {
-    return cljs.core.conj.call(null, tagged, spacified)
-  }, t_w_list, cljs.core.map.call(null, function(w) {
-    return cljs.core.ObjMap.fromObject(["\ufdd0'word"], {"\ufdd0'word":w})
-  }, function() {
-    var w_s = prosediff.core.split_to_words.call(null, string, "\ufdd0'strip-spaces", false);
-    var n_s = prosediff.core.split_to_words.call(null, string);
-    var result = null;
-    while(true) {
-      if(cljs.core.empty_QMARK_.call(null, w_s)) {
-        return cljs.core.reverse.call(null, result)
+    }, function() {
+      var G__2930 = query_form;
+      if(cljs.core._EQ_.call(null, cljs.core.PersistentVector.fromArray([1, 1, 1], true), G__2930)) {
+        return prosediff.directed_graph.edges_between.call(null, graph, vertex_1, vertex_2, edge_type)
       }else {
-        if(cljs.core._EQ_.call(null, cljs.core.first.call(null, w_s), cljs.core.first.call(null, n_s))) {
-          var G__9307 = cljs.core.rest.call(null, w_s);
-          var G__9308 = cljs.core.rest.call(null, n_s);
-          var G__9309 = cljs.core.cons.call(null, cljs.core.first.call(null, w_s), result);
-          w_s = G__9307;
-          n_s = G__9308;
-          result = G__9309;
-          continue
+        if(cljs.core._EQ_.call(null, cljs.core.PersistentVector.fromArray([1, 1, 0], true), G__2930)) {
+          return prosediff.directed_graph.edges_between.call(null, graph, vertex_1, vertex_2)
         }else {
-          var G__9310 = cljs.core.rest.call(null, w_s);
-          var G__9311 = n_s;
-          var G__9312 = cljs.core.cons.call(null, [cljs.core.str(cljs.core.first.call(null, result)), cljs.core.str(cljs.core.first.call(null, w_s))].join(""), cljs.core.rest.call(null, result));
-          w_s = G__9310;
-          n_s = G__9311;
-          result = G__9312;
-          continue
+          if(cljs.core._EQ_.call(null, cljs.core.PersistentVector.fromArray([1, 0, 1], true), G__2930)) {
+            return prosediff.directed_graph.out_edges.call(null, graph, vertex_1, edge_type)
+          }else {
+            if(cljs.core._EQ_.call(null, cljs.core.PersistentVector.fromArray([1, 0, 0], true), G__2930)) {
+              return prosediff.directed_graph.out_edges.call(null, graph, vertex_1)
+            }else {
+              if(cljs.core._EQ_.call(null, cljs.core.PersistentVector.fromArray([0, 1, 1], true), G__2930)) {
+                return prosediff.directed_graph.in_edges.call(null, graph, vertex_2, edge_type)
+              }else {
+                if(cljs.core._EQ_.call(null, cljs.core.PersistentVector.fromArray([0, 1, 0], true), G__2930)) {
+                  return prosediff.directed_graph.in_edges.call(null, graph, vertex_2)
+                }else {
+                  if(cljs.core._EQ_.call(null, cljs.core.PersistentVector.fromArray([0, 0, 1], true), G__2930)) {
+                    return prosediff.directed_graph.all_edges.call(null, graph, edge_type)
+                  }else {
+                    if(cljs.core._EQ_.call(null, cljs.core.PersistentVector.fromArray([0, 0, 0], true), G__2930)) {
+                      return prosediff.directed_graph.all_edges.call(null, graph)
+                    }else {
+                      if("\ufdd0'else") {
+                        throw new Error([cljs.core.str("No matching clause: "), cljs.core.str(query_form)].join(""));
+                      }else {
+                        return null
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
-      break
+    }())
+  };
+  edges = function(graph, wildcard, query) {
+    switch(arguments.length) {
+      case 1:
+        return edges__1.call(this, graph);
+      case 2:
+        return edges__2.call(this, graph, wildcard);
+      case 3:
+        return edges__3.call(this, graph, wildcard, query)
     }
-  }()))
+    throw new Error("Invalid arity: " + arguments.length);
+  };
+  edges.cljs$lang$arity$1 = edges__1;
+  edges.cljs$lang$arity$2 = edges__2;
+  edges.cljs$lang$arity$3 = edges__3;
+  return edges
+}();
+prosediff.directed_graph.remove_edge = function() {
+  var remove_edge = null;
+  var remove_edge__2 = function(graph, edge_vector) {
+    return cljs.core.apply.call(null, remove_edge, graph, edge_vector)
+  };
+  var remove_edge__3 = function(graph, vertex_1, vertex_2) {
+    return remove_edge.call(null, graph, vertex_1, vertex_2, null)
+  };
+  var remove_edge__4 = function(graph, vertex_1, vertex_2, edge_type) {
+    if(cljs.core.truth_(prosediff.directed_graph.edges.call(null, graph, cljs.core.PersistentVector.fromArray([vertex_1, vertex_2, edge_type], true)))) {
+      return cljs.core.update_in.call(null, cljs.core.update_in.call(null, cljs.core.update_in.call(null, cljs.core.update_in.call(null, graph, cljs.core.PersistentVector.fromArray([vertex_1, "\ufdd0'out", edge_type], true), cljs.core.fnil.call(null, cljs.core.dissoc, cljs.core.ObjMap.EMPTY), vertex_2), cljs.core.PersistentVector.fromArray([vertex_2, "\ufdd0'in", edge_type], true), cljs.core.fnil.call(null, cljs.core.dissoc, cljs.core.ObjMap.EMPTY), vertex_1), cljs.core.PersistentVector.fromArray([vertex_1, 
+      "\ufdd0'out"], true), function(d) {
+        if(cljs.core.empty_QMARK_.call(null, d.call(null, edge_type))) {
+          return cljs.core.dissoc.call(null, d, edge_type)
+        }else {
+          return d
+        }
+      }), cljs.core.PersistentVector.fromArray([vertex_2, "\ufdd0'in"], true), function(d) {
+        if(cljs.core.empty_QMARK_.call(null, d.call(null, edge_type))) {
+          return cljs.core.dissoc.call(null, d, edge_type)
+        }else {
+          return d
+        }
+      })
+    }else {
+      return graph
+    }
+  };
+  var remove_edge__5 = function(graph, vertex_1, vertex_2, edge_type, edge_label) {
+    if(cljs.core.truth_(prosediff.directed_graph.edges.call(null, graph, cljs.core.PersistentVector.fromArray([vertex_1, vertex_2, edge_type, edge_label], true)))) {
+      return remove_edge.call(null, graph, cljs.core.PersistentVector.fromArray([vertex_1, vertex_2, edge_type], true))
+    }else {
+      return null
+    }
+  };
+  remove_edge = function(graph, vertex_1, vertex_2, edge_type, edge_label) {
+    switch(arguments.length) {
+      case 2:
+        return remove_edge__2.call(this, graph, vertex_1);
+      case 3:
+        return remove_edge__3.call(this, graph, vertex_1, vertex_2);
+      case 4:
+        return remove_edge__4.call(this, graph, vertex_1, vertex_2, edge_type);
+      case 5:
+        return remove_edge__5.call(this, graph, vertex_1, vertex_2, edge_type, edge_label)
+    }
+    throw new Error("Invalid arity: " + arguments.length);
+  };
+  remove_edge.cljs$lang$arity$2 = remove_edge__2;
+  remove_edge.cljs$lang$arity$3 = remove_edge__3;
+  remove_edge.cljs$lang$arity$4 = remove_edge__4;
+  remove_edge.cljs$lang$arity$5 = remove_edge__5;
+  return remove_edge
+}();
+prosediff.directed_graph.remove_vertex = function remove_vertex(graph, vertex_name) {
+  return cljs.core.dissoc.call(null, cljs.core.reduce.call(null, function(g, v) {
+    return cljs.core.apply.call(null, prosediff.directed_graph.remove_edge, cljs.core.cons.call(null, g, v))
+  }, graph, cljs.core.concat.call(null, prosediff.directed_graph.out_edges.call(null, graph, vertex_name), prosediff.directed_graph.in_edges.call(null, graph, vertex_name))), vertex_name)
 };
-prosediff.core.tagged_word_to_HTML = function tagged_word_to_HTML(element, move_class, nil_class, word) {
-  return[cljs.core.str("<"), cljs.core.str(element), cljs.core.str(' class="'), cljs.core.str(cljs.core.apply.call(null, cljs.core.str, cljs.core.cons.call(null, cljs.core.empty_QMARK_.call(null, (new cljs.core.Keyword("\ufdd0'block-ids")).call(null, word)) ? nil_class : move_class, cljs.core.map.call(null, function(p1__9306_SHARP_) {
-    return[cljs.core.str(" pd-block-"), cljs.core.str(p1__9306_SHARP_)].join("")
-  }, (new cljs.core.Keyword("\ufdd0'block-ids")).call(null, word))))), cljs.core.str('">'), cljs.core.str(clojure.string.replace.call(null, (new cljs.core.Keyword("\ufdd0'word")).call(null, word), "\n", "<br/>")), cljs.core.str("</"), cljs.core.str(element), cljs.core.str(">")].join("")
+prosediff.directed_graph.all_edge_types = function all_edge_types(graph) {
+  return cljs.core.set.call(null, cljs.core.map.call(null, prosediff.directed_graph.edge_type, prosediff.directed_graph.edges.call(null, graph)))
 };
-prosediff.core.generate_HTML = function generate_HTML(element, move_class, nil_class, string, tagged_words) {
-  return cljs.core.apply.call(null, cljs.core.str, cljs.core.map.call(null, cljs.core.partial.call(null, prosediff.core.tagged_word_to_HTML, element, move_class, nil_class), prosediff.core.reinsert_spaces.call(null, tagged_words, string)))
+prosediff.directed_graph.make_graph = function() {
+  var make_graph = null;
+  var make_graph__0 = function() {
+    return cljs.core.ObjMap.EMPTY
+  };
+  var make_graph__1 = function(edges) {
+    return make_graph.call(null, edges, null)
+  };
+  var make_graph__2 = function(edges, vertices) {
+    return cljs.core.reduce.call(null, function(p1__2931_SHARP_, p2__2932_SHARP_) {
+      return prosediff.directed_graph.edge.call(null, p1__2931_SHARP_, p2__2932_SHARP_)
+    }, cljs.core.reduce.call(null, function(p1__2933_SHARP_, p2__2934_SHARP_) {
+      return cljs.core.apply.call(null, prosediff.directed_graph.vertex, p1__2933_SHARP_, p2__2934_SHARP_)
+    }, make_graph.call(null), vertices), edges)
+  };
+  make_graph = function(edges, vertices) {
+    switch(arguments.length) {
+      case 0:
+        return make_graph__0.call(this);
+      case 1:
+        return make_graph__1.call(this, edges);
+      case 2:
+        return make_graph__2.call(this, edges, vertices)
+    }
+    throw new Error("Invalid arity: " + arguments.length);
+  };
+  make_graph.cljs$lang$arity$0 = make_graph__0;
+  make_graph.cljs$lang$arity$1 = make_graph__1;
+  make_graph.cljs$lang$arity$2 = make_graph__2;
+  return make_graph
+}();
+goog.provide("prosediff.core");
+goog.require("cljs.core");
+goog.require("prosediff.directed_graph");
+goog.require("prosediff.directed_graph");
+prosediff.core.log = function log(item) {
+  return console.log(cljs.core.pr_str.call(null, item))
 };
 prosediff.core.clj_js = function clj_js(x) {
   if(cljs.core.string_QMARK_.call(null, x)) {
@@ -21309,10 +21397,10 @@ prosediff.core.clj_js = function clj_js(x) {
       return cljs.core.name.call(null, x)
     }else {
       if(cljs.core.map_QMARK_.call(null, x)) {
-        return cljs.core.reduce.call(null, function(m, p__9315) {
-          var vec__9316 = p__9315;
-          var k = cljs.core.nth.call(null, vec__9316, 0, null);
-          var v = cljs.core.nth.call(null, vec__9316, 1, null);
+        return cljs.core.reduce.call(null, function(m, p__2935) {
+          var vec__2936 = p__2935;
+          var k = cljs.core.nth.call(null, vec__2936, 0, null);
+          var v = cljs.core.nth.call(null, vec__2936, 1, null);
           return cljs.core.assoc.call(null, m, clj_js.call(null, k), clj_js.call(null, v))
         }, cljs.core.ObjMap.EMPTY, x).strobj
       }else {
@@ -21329,7 +21417,7 @@ prosediff.core.clj_js = function clj_js(x) {
     }
   }
 };
-prosediff.core.process = function process(left_string, right_string) {
-  return prosediff.core.clj_js.call(null, cljs.core.map.call(null, cljs.core.partial.call(null, prosediff.core.generate_HTML, "span", "pd-move"), cljs.core.PersistentVector.fromArray(["pd-delete", "pd-insert"], true), cljs.core.PersistentVector.fromArray([left_string, right_string], true), prosediff.core.tagged_word_lists.call(null, left_string, right_string)))
+prosediff.core.test_1 = function test_1() {
+  return prosediff.core.log.call(null, prosediff.directed_graph.make_graph.call(null, cljs.core.PersistentVector.fromArray([cljs.core.PersistentVector.fromArray([1, 2], true), cljs.core.PersistentVector.fromArray([2, 3], true)], true)))
 };
-goog.exportSymbol("prosediff.core.process", prosediff.core.process);
+goog.exportSymbol("prosediff.core.test_1", prosediff.core.test_1);
