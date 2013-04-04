@@ -63,6 +63,14 @@
          (> x high) high
          :else x)))
 
+(defn safe-subvec
+  "Takes the subvec of the vector given, but allowing out-of-range specifications and backwards indices."
+  ([v start end]
+   (subvec v (clip 0 (count v) (min start end))
+             (clip 0 (count v) (max start end))))
+  ([v start]
+   (safe-subvec v start (count v))))
+
 (defn bool-to-int
   "Maps true -> 1, false -> 0."
   ([b] (if b 1 0)))
@@ -72,16 +80,3 @@
   ([i]
    {:pre [(number? i)]}
    (if (= i 0) false true)))
-
-(defn xor
-  "Takes the exclusive or of its two arguments."
-  ([a b]
-   (int-to-bool (apply bit-xor (map bool-to-int [a b])))))
-
-(defn safe-subvec
-  "Takes the subvec of the vector given, but allowing out-of-range specifications and backwards indices."
-  ([v start end]
-   (subvec v (clip 0 (count v) (min start end))
-             (clip 0 (count v) (max start end))))
-  ([v start]
-   (safe-subvec v start (count v))))
