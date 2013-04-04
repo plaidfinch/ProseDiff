@@ -3,7 +3,7 @@
               [clojure.java.shell :as shell]))
 
 (declare
-  matching-edge tree-to-dot)
+  matching-edge tree-to-dot view-dot)
 
 ; Print additional logging during program run.
 (def debug
@@ -126,17 +126,29 @@
   "Returns the number of an end-symbol given."
   ([s] (if (end-symbol? s) (-> s meta ::number))))
 
-; TODO: Fix sorting function so that it always sorts keywords after symbols, rather than relying on alphabetic order (: coming before #) to do that.
 (defn find-ends
   "Takes any number of strings and returns an ends map mapping end-symbols to where those ends would be in the terminator-combined text."
   ([& strings]
    (let [end-numbers (drop 1 (reductions #(inc (+ %1 %2)) 0 (map count strings)))]
-        (into (sorted-map-by #(if (and (end-symbol? %1) (end-symbol? %2))
-                                  (apply < (map end-symbol-number [%1 %2]))
-                                  (> 0 (compare (str %1) (str %2)))))
-              (map #(vector (end-symbol %2) %1)
-                   end-numbers
-                   (iterate inc 0))))))
+        (into
+          (sorted-map-by
+            (fn [a b]
+                (assert (and (or (end-symbol? a)
+                                 (and (keyword? a)
+                                      (= ":current-end" (str a))))
+                             (or (end-symbol? b)
+                                 (and (keyword? b)
+                                      (= ":current-end" (str b)))))
+                        "The keys of an ends map may not be anything other than end-symbols and the keyword :current-end.")
+                (cond (and (end-symbol? a) (end-symbol? b))
+                        (apply < (map end-symbol-number [a b]))
+                      (and (end-symbol? a) (keyword? b))
+                        true
+                      (and (keyword? a) (end-symbol? b))
+                        false)))
+          (map #(vector (end-symbol %2) %1)
+               end-numbers
+               (iterate inc 0))))))
 
 ;;  Dereferencing functions for various pointers into the text...
 
@@ -284,30 +296,67 @@
 
 ; TODO! Go through entire remainder, inserting as needed, and keep track of edge-split inserts during this in a list. Then (reduce (partial dg/edge tree) (map #(concat % [:suffix]) (partition 2 1 list-of-new-nodes))).
 
-(defn advance-active-point
-  "Moves the active point along by one step using the rules for the Ukkonen algorithm: if root, decrease active-length by 1; otherwise, move by a suffix link from the active-node; otherwise, move to root."
-  ([text-vec tree tree-changed {:keys [current-end] :as ends} {:keys [active-node active-edge active-length] :as active-point}]
-   (let [current-symbol (index-deref text-vec current-end)
-         new-active-edge (index-deref text-vec (- current-end active-length))]
-        (if (not tree-changed)
-            (assoc (update-in active-point [:active-length] inc)
-                   :active-edge new-active-edge)
-            (if (= active-node :root)
-                (if (> active-length 0)
-                    (update-in active-point [:active-length] dec)
-                    active-point)
-                (if-let [out-suffix-link
-                         (first (dg/edges tree [active-node :_ :suffix]))]
-                        (assoc active-point :active-node
-                               (dg/edge-end out-suffix-link))
-                        (assoc active-point :active-node :root)))))))
+(defn raise-active-point
+  "Moves the active point towards the root by one character, using the rules for the algorithm -- if active node is root, decrease length and switch active edge to the next-shortest edge; if not, follow a suffix link if there is one, and if there is not one, go to root."
+  ([text-vec tree remainder {:keys [current-end] :as ends} {:keys [active-node active-edge active-length] :as active-point}]
+   (let [next-active-edge (if (> (- current-end remainder 1) 0)
+                              (index-deref text-vec (- current-end remainder 1)))]
+        (if (= active-node :root)
+            (if (> active-length 0)
+                (assoc-many-in active-point
+                               [[:active-length] (dec active-length)]
+                               [[:active-edge]   next-active-edge])
+                active-point)
+            (if-let [out-suffix-link
+                     (do (assert (<= (dg/edges tree [active-node :_ :suffix]) 1)
+                                 "Something is wrong if there is more than one suffix link out of any node in the suffix tree.")
+                         (first (dg/edges tree [active-node :_ :suffix])))]
+                    (assoc active-point :active-node
+                           (dg/edge-end out-suffix-link))
+                    (assoc active-point :active-node :root))))))
 
-(defn advance-remainder
-  "Moves the remainder along by one step using the rules for the Ukkonen algorithm: if the tree was changed and it's non-zero, decrease by one. If the tree wasn't changed, increase by one."
-  ([tree-changed remainder]
-   (max 1 (if tree-changed
-              (dec remainder)
-              (inc remainder)))))
+(defn lower-active-point
+  "Moves the active point away from the root by one character. If the active edge is nil, finds the correct active edge to pick based on the current symbol."
+  ([text-vec tree remainder {:keys [current-end] :as ends} {:keys [active-node active-edge active-length] :as active-point}]
+   (let [this-active-edge (index-deref text-vec (- current-end active-length))]
+        (assoc-many-in active-point
+                       [[:active-length] (inc active-length)]
+                       [[:active-edge]   this-active-edge]))))
+        
+(defn advance-active-point
+  "Raises or lowers the active point based on whether the tree has changed (yes -> raise, no -> lower)."
+  ([tree-changed text-vec tree remainder ends active-point]
+   (if tree-changed
+       (raise-active-point text-vec tree remainder ends active-point)
+       (lower-active-point text-vec tree remainder ends active-point))))
+
+(defn test-and-split-all
+  "Iterates through the remainder, splitting off new children using test-and-split until the graph remains unchanged -- indicating that all remaining suffixes are present in the graph."
+  ([text-vec tree remainder {:keys [current-end] :as ends} active-point]
+   (loop [tree         tree
+          remainder    remainder
+          active-point active-point
+          new-nodes    []]
+         (if debug
+             (do (view-dot (tree-to-dot text-vec tree active-point ends)
+                           (str "preview" current-end "-" (count new-nodes)))
+                 (dbg active-point) (dbg remainder) (dbg ends)
+                 (with-redefs [final-dot-formatting false]
+                              (println (tree-to-dot text-vec tree active-point ends))
+                              (println))))
+         (let [new-tree     (test-and-split text-vec tree active-point ends)
+               tree-changed (not (= tree new-tree))]
+              (if tree-changed
+                  (recur new-tree
+                         (dec remainder)
+                         (raise-active-point text-vec tree remainder ends active-point)
+                         (if (= 2 (- (count new-tree) (count tree))) ; <- if edge-split
+                             (conj new-nodes (new-node-name tree))
+                             new-nodes))
+                  (reduce dg/edge
+                          new-tree
+                          (map #(concat % [:suffix])
+                               (partition 2 1 new-nodes))))))))
 
 (defn canonize
   "Makes the active point canonical. Same as in original paper. NOT YET IMPLEMENTED!!!"
@@ -317,26 +366,20 @@
 (defn ukkonen-construct
   "Constructs a suffix tree to represent text-vec. Uses Ukkonen's algorithm."
   ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} remainder {:keys [current-end] :as ends}]
-   (if debug
-       (do (dbg active-point) (dbg remainder) (dbg ends)
-           (with-redefs [final-dot-formatting false]
-                        (println (tree-to-dot text-vec tree active-point ends))
-                        (println))))
    (if (> current-end (count text-vec))
        (do (if debug (do (println "CONSTRUCTION COMPLETE.\n")
                          (dbg active-point)
                          (dbg remainder)
                          (dbg ends)))
            (vary-meta tree assoc ::finished true))
-       (let [new-tree (test-and-split text-vec tree active-point ends)
-             new-active-point (canonize text-vec new-tree remainder ends active-point)
+       (let [new-tree (test-and-split-all text-vec tree remainder ends active-point)
              tree-changed (not (= tree new-tree))]
             (recur text-vec
                    new-tree
-                   (advance-active-point
-                     text-vec new-tree tree-changed ends new-active-point)
-                   (advance-remainder
-                     tree-changed remainder)
+                   (if tree-changed
+                       (starting-active-point)
+                       (lower-active-point text-vec new-tree remainder ends active-point))
+                   (if tree-changed 1 (inc remainder))
                    (update-in ends [:current-end] inc))))))
 
 (defn make-suffix-tree
@@ -419,15 +462,19 @@
   ([& strings]
    (println (apply make-dot-tree strings))))
 
-(defn view-dot-tree
+(defn view-dot
   "Runs the algorithm and opens a PDF window viewing the graph. Only works on Mac OS X; for debugging purposes only."
-  ([& strings]
-   (do (shell/sh "dot" "-Tpdf" "-opreview.pdf" :in (apply make-dot-tree strings))
+  ([string filename]
+   (do (shell/sh "dot" "-Tpdf" (str "-o" filename ".pdf") :in string)
        (shell/sh "open" "preview.pdf")
-       nil)))
+       nil))
+  ([string]
+   (view-dot string "preview")))
 
 (defn debug-dot-tree
   "Runs the algorithm and directly prints a DOT format tree to the console, along with intermediate debugging information as it is building the tree. Equivalent to running with the var debug set to true."
   ([& strings]
    (with-redefs [debug true]
-                (apply print-dot-tree strings))))
+                (let [d-t (apply make-dot-tree strings)]
+                     (println d-t)
+                     (view-dot d-t)))))
