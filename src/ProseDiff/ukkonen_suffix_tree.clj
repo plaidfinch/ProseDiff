@@ -1,5 +1,6 @@
 (ns prosediff.ukkonen-suffix-tree
     (:require [prosediff.directed-graph :as dg]
+              [prosediff.utilities :refer :all]
               [clojure.java.shell :as shell]))
 
 (declare
@@ -13,83 +14,12 @@
 (def final-dot-formatting
   true)
 
-;;  Some helpful utility functions...
-
-; Wrap in dbg to log.
-(defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
-
 ; Useful for interaction with the shell via the debugger
 (defn shell-lines
   ([command & args]
    (map (comp (partial apply str)
               (partial filter #(not= % \newline)))
         (re-seq #".*\n" (:out (apply shell/sh command args))))))
-
-(defn take-until-same
-  "Returns the part of a sequence up until it has a consecutive repeated element."
-  ([s]
-   (cons (first s)
-         (map second (take-while #((complement =) (first %) (second %))
-                                 (partition 2 1 s))))))
-
-(defn take-while-unique
-  "Returns a lazy subsequence of a sequence up until it repeats any element (not just a consecutive element like take-until-same does)."
-  ([coll]
-   (take-while-unique coll #{}))
-  ([coll seen]
-   (lazy-seq
-     (when ((complement seen) (first coll))
-           (when-let [coll (seq coll)]
-                     (cons (first coll)
-                           (take-while-unique
-                             (rest coll)
-                             (conj seen (first coll)))))))))
-
-; This one is from clojure.contrib
-(defn dissoc-in
-  "Dissociates an entry from a nested associative structure returning a new
-  nested structure. keys is a sequence of keys. Any empty maps that result
-  will not be present in the new structure."
-  [m [k & ks :as keys]]
-  (if ks
-    (if-let [nextmap (get m k)]
-      (let [newmap (dissoc-in nextmap ks)]
-        (if (seq newmap)
-          (assoc m k newmap)
-          (dissoc m k)))
-      m)
-    (dissoc m k)))
-
-(defn update-many-in
-  "Takes a map and any number of vectors of format [[k & ks] f & args] and uses update-in to update all these values in the map."
-  ([m & key-function-args-vecs]
-   (reduce #(apply update-in %1 %2) m key-function-args-vecs)))
-
-(defn assoc-many-in
-  "Takes a map and any number of vectors of format [[k & ks] f & args] and uses assoc-in to assoc all these values in the map."
-  ([m & key-value-vecs]
-   (reduce #(apply assoc-in %1 %2) m key-value-vecs)))
-
-(defn only-item
-  "Returns first of a list, but if the list is not 1 long, fails an assertion."
-  ([L]
-   (assert (= 1 (count L)) (str "List passed to only-item was of length " (count L) " and was equal to the following: " L))
-   (first L)))
-
-(defn clip
-  "Clips x to an interval: if x < low, returns low; if x > high, returns high; else returns x."
-  ([low high x]
-   (cond (< x low)  low
-         (> x high) high
-         :else x)))
-
-(defn safe-subvec
-  "Takes the subvec of the vector given, but allowing out-of-range specifications and backwards indices."
-  ([v start end]
-   (subvec v (clip 0 (count v) (min start end))
-             (clip 0 (count v) (max start end))))
-  ([v start]
-   (safe-subvec v start (count v))))
 
 ;;  Create and manipulate terminating symbols and end symbols...
 
@@ -303,8 +233,6 @@
             tree
             (add-child-at tree text-vec ends active-point)))))
 
-; TODO! Go through entire remainder, inserting as needed, and keep track of edge-split inserts during this in a list. Then (reduce (partial dg/edge tree) (map #(concat % [:suffix]) (partition 2 1 list-of-new-nodes))).
-
 (defn raise-active-point
   "Moves the active point towards the root by one character, using the rules for the algorithm -- if active node is root, decrease length and switch active edge to the next-shortest edge; if not, follow a suffix link if there is one, and if there is not one, go to root."
   ([text-vec tree remainder {:keys [current-end] :as ends} {:keys [active-node active-edge active-length] :as active-point}]
@@ -328,9 +256,7 @@
   "Moves the active point away from the root by one character. If the active edge is nil, finds the correct active edge to pick based on the current symbol."
   ([text-vec tree remainder {:keys [current-end] :as ends} {:keys [active-node active-edge active-length] :as active-point}]
    (let [this-active-edge (index-deref text-vec (- current-end active-length))]
-        (assoc-many-in active-point
-                       [[:active-length] (inc active-length)]
-                       [[:active-edge]   this-active-edge]))))
+        (assoc active-point :active-length (inc active-length)))))
         
 (defn advance-active-point
   "Raises or lowers the active point based on whether the tree has changed (yes -> raise, no -> lower)."
@@ -367,10 +293,34 @@
                           (map #(concat % [:suffix])
                                (partition 2 1 new-nodes))))))))
 
+(defn parent-node
+  "Returns the parent node of a node in the tree, or nil if no parent."
+  ([tree active-node]
+   {:post [(xor (= :root active-node) (not= % nil))]}
+   (first (dg/edges tree [:_ active-node :normal]))))
+
 (defn canonize
-  "Makes the active point canonical. Same as in original paper. NOT YET IMPLEMENTED!!!"
-  ([text-vec tree remainder {:keys [current-end] :as ends} {:keys [active-node active-edge active-length] :as active-point}]
-   active-point))
+  "Makes the active point canonical. Same as in original paper."
+  ([text-vec tree remainder {:keys [current-end] :as ends} active-point]
+   (loop [{:keys [active-node active-edge active-length] :as active-point}
+          active-point]
+         (let [this-active-edge (index-deref text-vec (- current-end active-length))
+               this-active-edge-node (matching-edge tree active-node this-active-edge)
+               this-active-edge-length (edge-length active-node this-active-edge-node)
+               this-parent-node (parent-node tree active-node)
+               this-parent-edge-length (edge-length this-parent-node active-node)]
+              (if (< active-length 0)
+                  (recur
+                    {:active-length (+ this-parent-edge-length active-length)
+                     :active-node   this-parent-node
+                     :active-edge   this-active-edge})
+                  (if (or (zero? active-length)
+                          (< active-length this-active-edge-length))
+                      (assoc active-point :active-edge this-active-edge)
+                      (recur
+                        {:active-length (- active-length this-active-edge-length)
+                         :active-node   this-active-edge-node
+                         :active-edge   this-active-edge})))))))
 
 (defn ukkonen-construct
   "Constructs a suffix tree to represent text-vec. Uses Ukkonen's algorithm."
