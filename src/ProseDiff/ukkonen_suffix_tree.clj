@@ -18,6 +18,13 @@
 ; Wrap in dbg to log.
 (defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
 
+; Useful for interaction with the shell via the debugger
+(defn shell-lines
+  ([command & args]
+   (map (comp (partial apply str)
+              (partial filter #(not= % \newline)))
+        (re-seq #".*\n" (:out (apply shell/sh command args))))))
+
 (defn take-until-same
   "Returns the part of a sequence up until it has a consecutive repeated element."
   ([s]
@@ -145,7 +152,9 @@
                       (and (end-symbol? a) (keyword? b))
                         true
                       (and (keyword? a) (end-symbol? b))
-                        false)))
+                        false
+                      (and (keyword? a) (keyword? b))
+                        (< 0 (compare (str a) (str b))))))
           (map #(vector (end-symbol %2) %1)
                end-numbers
                (iterate inc 0))))))
@@ -339,13 +348,13 @@
           new-nodes    []]
          (if debug
              (do (view-dot (tree-to-dot text-vec tree active-point ends)
-                           (str "preview" current-end "-" (count new-nodes)))
+                           (str "preview " current-end "-" (count new-nodes)))
                  (dbg active-point) (dbg remainder) (dbg ends)
                  (with-redefs [final-dot-formatting false]
                               (println (tree-to-dot text-vec tree active-point ends))
                               (println))))
          (let [new-tree     (test-and-split text-vec tree active-point ends)
-               tree-changed (not (= tree new-tree))]
+               tree-changed (not= tree new-tree)]
               (if tree-changed
                   (recur new-tree
                          (dec remainder)
@@ -373,7 +382,7 @@
                          (dbg ends)))
            (vary-meta tree assoc ::finished true))
        (let [new-tree (test-and-split-all text-vec tree remainder ends active-point)
-             tree-changed (not (= tree new-tree))]
+             tree-changed (not= tree new-tree)]
             (recur text-vec
                    new-tree
                    (if tree-changed
@@ -475,6 +484,11 @@
   "Runs the algorithm and directly prints a DOT format tree to the console, along with intermediate debugging information as it is building the tree. Equivalent to running with the var debug set to true."
   ([& strings]
    (with-redefs [debug true]
+                ; Remove old preview PDFs...
+                (doall (map (partial shell/sh "rm")
+                            (filter (partial re-find #"^preview.*\.pdf")
+                                    (shell-lines "ls"))))
+                ; Make the new dot tree, print it, and create and view the final PDF...
                 (let [d-t (apply make-dot-tree strings)]
                      (println d-t)
-                     (view-dot d-t)))))
+                     (view-dot d-t "preview final")))))
