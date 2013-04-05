@@ -3,7 +3,7 @@
 (defn vertex
   "Returns graph with a vertex added to it. If optional data is given, this object is attached to the vertex; otherwise, the vertex's data is nil. If the vertex already exists, overwrites data with new given data, unless no data is given, in which case no change is made."
   ([graph vertex-name data]
-    (if (graph vertex-name) 
+    (if (graph vertex-name)
       (assoc-in graph [vertex-name :data] data)
       (assoc graph vertex-name {:out {} :in {} :data data})))
   ([graph vertex-name]
