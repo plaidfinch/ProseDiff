@@ -260,8 +260,7 @@
   ([text-vec tree remainder {:keys [current-end] :as ends} {:keys [active-node active-edge active-length] :as active-point}]
    (let [this-active-edge (index-deref text-vec (- current-end active-length))]
         (into active-point {:active-length (inc active-length)
-                            :active-edge this-active-edge ; <- PICK UP HERE: WHY IS THIS SO VERY NECESSARY??? Also... why is the active point improperly canonized at step 9 all the way through step 10? Something's wrong in canonize...
-                            }))))
+                            :active-edge this-active-edge}))))
         
 (defn advance-active-point
   "Raises or lowers the active point based on whether the tree has changed (yes -> raise, no -> lower)."
