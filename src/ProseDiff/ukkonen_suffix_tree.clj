@@ -1,6 +1,7 @@
 (ns prosediff.ukkonen-suffix-tree
     (:require [prosediff.directed-graph :as dg]
               [prosediff.utilities :refer :all]
+              [prosediff.logic :refer :all]
               [clojure.java.shell :as shell]))
 
 (declare
@@ -174,8 +175,8 @@
   ([tree text-vec {:keys [current-end] :as ends} {:keys [active-node active-edge active-length] :as active-point}]
    (assert (= clojure.lang.PersistentTreeMap (type ends)))
    (let [new-node (new-node-name tree)
-         old-edge (if active-edge
-                      (only-item
+         old-edge (if (and active-edge (> active-length 0))
+                      (first
                         (dg/edges tree [active-node
                                         (matching-edge tree active-node active-edge)
                                         :normal])))
@@ -245,18 +246,22 @@
                                [[:active-edge]   next-active-edge])
                 active-point)
             (if-let [out-suffix-link
-                     (do (assert (<= (dg/edges tree [active-node :_ :suffix]) 1)
-                                 "Something is wrong if there is more than one suffix link out of any node in the suffix tree.")
+                     (do (assert
+                           (<= (count (dg/edges tree [active-node :_ :suffix])) 1)
+                           "Something is wrong if there is more than one suffix link out of any node in the suffix tree.")
                          (first (dg/edges tree [active-node :_ :suffix])))]
-                    (assoc active-point :active-node
-                           (dg/edge-end out-suffix-link))
+                    (do (println "FOLLOWED SUFFIX LINK")
+                        (assoc active-point :active-node
+                           (dg/edge-end out-suffix-link)))
                     (assoc active-point :active-node :root))))))
 
 (defn lower-active-point
   "Moves the active point away from the root by one character. If the active edge is nil, finds the correct active edge to pick based on the current symbol."
   ([text-vec tree remainder {:keys [current-end] :as ends} {:keys [active-node active-edge active-length] :as active-point}]
    (let [this-active-edge (index-deref text-vec (- current-end active-length))]
-        (assoc active-point :active-length (inc active-length)))))
+        (into active-point {:active-length (inc active-length)
+                            :active-edge this-active-edge ; <- PICK UP HERE: WHY IS THIS SO VERY NECESSARY??? Also... why is the active point improperly canonized at step 9 all the way through step 10? Something's wrong in canonize...
+                            }))))
         
 (defn advance-active-point
   "Raises or lowers the active point based on whether the tree has changed (yes -> raise, no -> lower)."
@@ -272,19 +277,25 @@
           remainder    remainder
           active-point active-point
           new-nodes    []]
-         (if debug
-             (do (view-dot (tree-to-dot text-vec tree active-point ends)
-                           (str "preview " current-end "-" (count new-nodes)))
-                 (dbg active-point) (dbg remainder) (dbg ends)
-                 (with-redefs [final-dot-formatting false]
-                              (println (tree-to-dot text-vec tree active-point ends))
-                              (println))))
          (let [new-tree     (test-and-split text-vec tree active-point ends)
-               tree-changed (not= tree new-tree)]
+               tree-changed (not= tree new-tree)
+               new-active-point (canonize text-vec new-tree ends
+                                   (raise-active-point text-vec tree remainder ends active-point))]
+              (if debug
+                  (do (view-dot (tree-to-dot text-vec 
+                                             new-tree
+                                             new-active-point
+                                             (update-in ends [:current-end] inc))
+                                (str "preview " current-end "-" (count new-nodes)))
+                      (dbg active-point) (dbg remainder) (dbg ends)
+                      (println "current symbol =" (index-deref text-vec current-end))
+                      (with-redefs [final-dot-formatting false]
+                                   (println (tree-to-dot text-vec tree active-point ends))
+                                   (println))))
               (if tree-changed
                   (recur new-tree
                          (dec remainder)
-                         (raise-active-point text-vec tree remainder ends active-point)
+                         new-active-point
                          (if (= 2 (- (count new-tree) (count tree))) ; <- if edge-split
                              (conj new-nodes (new-node-name tree))
                              new-nodes))
@@ -293,34 +304,69 @@
                           (map #(concat % [:suffix])
                                (partition 2 1 new-nodes))))))))
 
-(defn parent-node
+(defn parent-edge
   "Returns the parent node of a node in the tree, or nil if no parent."
   ([tree active-node]
-   {:post [(xor (= :root active-node) (not= % nil))]}
+   {:post [(iff (= :root active-node) (nil? %))]}
    (first (dg/edges tree [:_ active-node :normal]))))
+
+(defn canonical?
+  "Tests whether an active point is canonical in the tree."
+  ([tree ends {:keys [active-node active-edge active-length] :as active-point}]
+   (if-let [active-child
+            (matching-edge tree active-node active-edge)]
+           (let [active-edge-length
+                 (edge-length
+                   ends
+                   (first (dg/edges tree [active-node active-child :normal])))]
+                (< active-length active-edge-length))
+           (zero? active-length))))
 
 (defn canonize
   "Makes the active point canonical. Same as in original paper."
-  ([text-vec tree remainder {:keys [current-end] :as ends} active-point]
+  ([text-vec tree {:keys [current-end] :as ends} active-point]
+   {:pre  [(do (if (not (canonical? tree ends active-point))
+                   (println "non-canon —>\t" active-point))
+               true)]
+    :post [(do (println "canonical —>\t" % "\n")
+               (canonical? tree ends %))]}
    (loop [{:keys [active-node active-edge active-length] :as active-point}
           active-point]
-         (let [this-active-edge (index-deref text-vec (- current-end active-length))
-               this-active-edge-node (matching-edge tree active-node this-active-edge)
-               this-active-edge-length (edge-length active-node this-active-edge-node)
-               this-parent-node (parent-node tree active-node)
-               this-parent-edge-length (edge-length this-parent-node active-node)]
+         (let [new-active-edge
+                 (index-deref text-vec (- current-end active-length))
+               active-child
+                 (matching-edge tree active-node active-edge)
+               active-edge-length
+                 (if active-child
+                     (edge-length
+                       ends
+                       (first (dg/edges tree [active-node active-child :normal]))))
+               edge-above
+                 (parent-edge tree active-node)
+               parent
+                 (dg/edge-start edge-above)
+               parent-edge-length
+                 (if edge-above
+                     (edge-length ends edge-above))
+               parent-active-edge
+                 (if (and parent parent-edge-length)
+                     (index-deref text-vec
+                                  (- current-end
+                                     active-length
+                                     parent-edge-length)))]
+              (assert (nand (= :root active-node) (< active-length 0)))
               (if (< active-length 0)
                   (recur
-                    {:active-length (+ this-parent-edge-length active-length)
-                     :active-node   this-parent-node
-                     :active-edge   this-active-edge})
+                    {:active-length (+ parent-edge-length active-length)
+                     :active-node   parent
+                     :active-edge   parent-active-edge})
                   (if (or (zero? active-length)
-                          (< active-length this-active-edge-length))
-                      (assoc active-point :active-edge this-active-edge)
+                          (< active-length active-edge-length))
+                      (assoc active-point :active-edge active-edge)
                       (recur
-                        {:active-length (- active-length this-active-edge-length)
-                         :active-node   this-active-edge-node
-                         :active-edge   this-active-edge})))))))
+                        {:active-length (- active-length active-edge-length)
+                         :active-node   active-child
+                         :active-edge   new-active-edge})))))))
 
 (defn ukkonen-construct
   "Constructs a suffix tree to represent text-vec. Uses Ukkonen's algorithm."
@@ -332,14 +378,30 @@
                          (dbg ends)))
            (vary-meta tree assoc ::finished true))
        (let [new-tree (test-and-split-all text-vec tree remainder ends active-point)
-             tree-changed (not= tree new-tree)]
+             tree-changed (not= tree new-tree)
+             new-active-point
+               (if tree-changed
+                   (starting-active-point)
+                   (canonize text-vec new-tree ends
+                             (lower-active-point text-vec new-tree remainder ends active-point)))
+             new-remainder (if tree-changed 1 (inc remainder))
+             new-ends (update-in ends [:current-end] inc)]
+            (if debug
+                (do (view-dot (tree-to-dot text-vec 
+                                           new-tree
+                                           new-active-point
+                                           (update-in ends [:current-end] inc))
+                              (str "preview " current-end))
+                    (dbg new-active-point) (dbg new-remainder) (dbg new-ends)
+                    (println "current symbol =" (index-deref text-vec current-end))
+                    (with-redefs [final-dot-formatting false]
+                                 (println (tree-to-dot text-vec tree active-point ends))
+                                 (println))))
             (recur text-vec
                    new-tree
-                   (if tree-changed
-                       (starting-active-point)
-                       (lower-active-point text-vec new-tree remainder ends active-point))
-                   (if tree-changed 1 (inc remainder))
-                   (update-in ends [:current-end] inc))))))
+                   new-active-point
+                   new-remainder
+                   new-ends)))))
 
 (defn make-suffix-tree
   "Constructs a suffix tree to represent the string(s). Uses Ukkonen's algorithm."
@@ -391,7 +453,7 @@
   ([text-vec tree {:keys [active-node active-edge active-length] :as active-point} {:keys [current-end] :as ends}]
    (str "digraph {\n"
         (if final-dot-formatting
-            (str "\tnode [shape=point];\n\tnode [label=""];\n\troot [width=0.1];\n"
+            (str "\troot [width=0.1];\n"
                   "\t" (if (keyword? active-node)
                            (name active-node)
                            active-node)
@@ -403,7 +465,7 @@
   ([text-vec ends tree]
    (str "digraph {\n"
         (if final-dot-formatting
-            (str "\tnode [shape=point];\n\tnode [label=""];\n\troot [width=0.1];\n"))
+            (str "\troot [width=0.1];\n"))
         (apply str
                (map (partial dot-edge-str tree text-vec ends)
                     (dg/edges tree)))
