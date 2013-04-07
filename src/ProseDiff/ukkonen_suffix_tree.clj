@@ -5,7 +5,7 @@
               [clojure.java.shell :as shell]))
 
 (declare
-  matching-edge tree-to-dot view-dot)
+  matching-edge tree-to-dot view-dot canonize)
 
 ; Print additional logging during program run.
 (def debug
@@ -269,6 +269,11 @@
        (raise-active-point text-vec tree remainder ends active-point)
        (lower-active-point text-vec tree remainder ends active-point))))
 
+(defn suffix-link
+  "Adds a suffix link between two nodes, from the first to the second."
+  ([tree node-1 node-2]
+   (dg/edge tree [node-1 node-2 :suffix])))
+
 (defn test-and-split-all
   "Iterates through the remainder, splitting off new children using test-and-split until the graph remains unchanged -- indicating that all remaining suffixes are present in the graph."
   ([text-vec tree remainder {:keys [current-end] :as ends} active-point]
@@ -298,10 +303,9 @@
                          (if (= 2 (- (count new-tree) (count tree))) ; <- if edge-split
                              (conj new-nodes (new-node-name tree))
                              new-nodes))
-                  (reduce dg/edge
+                  (reduce (fn [t [a b]] (suffix-link t a b))
                           new-tree
-                          (map #(concat % [:suffix])
-                               (partition 2 1 new-nodes))))))))
+                          (partition 2 1 new-nodes)))))))
 
 (defn parent-edge
   "Returns the parent node of a node in the tree, or nil if no parent."
