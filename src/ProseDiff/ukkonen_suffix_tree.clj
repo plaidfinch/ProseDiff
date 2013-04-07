@@ -271,7 +271,7 @@
 
 (defn suffix-link
   "Adds a suffix link between two nodes, from the first to the second."
-  ([tree node-1 node-2]
+  ([tree [node-1 node-2]]
    (dg/edge tree [node-1 node-2 :suffix])))
 
 (defn test-and-split-all
@@ -303,9 +303,7 @@
                          (if (= 2 (- (count new-tree) (count tree))) ; <- if edge-split
                              (conj new-nodes (new-node-name tree))
                              new-nodes))
-                  (reduce (fn [t [a b]] (suffix-link t a b))
-                          new-tree
-                          (partition 2 1 new-nodes)))))))
+                  (reduce suffix-link new-tree (partition 2 1 new-nodes)))))))
 
 (defn parent-edge
   "Returns the parent node of a node in the tree, or nil if no parent."
