@@ -57,11 +57,11 @@
   ([graph vertex-name]
     (let [o-v (get-in graph [vertex-name :out])]
       (for [edge-type (keys o-v)
-            [other-vertex edge-label] (o-v edge-type)]
+            [other-vertex edge-label] (get o-v edge-type)]
         [vertex-name other-vertex edge-type edge-label])))
   ([graph vertex-name edge-type]
     (let [o-v (get-in graph [vertex-name :out])]
-      (for [[other-vertex edge-label] (o-v edge-type)]
+      (for [[other-vertex edge-label] (get o-v edge-type)]
         [vertex-name other-vertex edge-type edge-label]))))
 
 (defn- in-edges
@@ -69,11 +69,11 @@
   ([graph vertex-name]
     (let [i-v (get-in graph [vertex-name :in])]
       (for [edge-type (keys i-v)
-            [other-vertex edge-label] (i-v edge-type)]
+            [other-vertex edge-label] (get i-v edge-type)]
         [other-vertex vertex-name edge-type edge-label])))
   ([graph vertex-name edge-type]
     (let [i-v (get-in graph [vertex-name :in])]
-      (for [[other-vertex edge-label] (i-v edge-type)]
+      (for [[other-vertex edge-label] (get i-v edge-type)]
         [other-vertex vertex-name edge-type edge-label]))))
 
 (defn contains-vertex?
