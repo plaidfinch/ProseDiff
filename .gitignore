@@ -1,6 +1,12 @@
-pom.xml
+/pom.xml
 *jar
-/lib/
-/classes/
-/targets/
-.lein-deps-sum
+/lib
+/classes
+/native
+/.lein-failures
+/checkouts
+/.lein-deps-sum
+/.lein-cljsbuild-compiler-0/
+/.lein-cljsbuild-repl
+/.crossover-cljs
+preview*.pdf
